@@ -1,0 +1,33 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Users {
+  id         String   @id @default(uuid())
+  fullName   String?
+  email      String   
+  password   String
+  profile_image String?
+  duration DateTime
+  kateqory_Id String?
+  status     Boolean   @default(true)
+  is_shadow_banned Boolean   @default(false)
+  bio String?
+  // kateqory   Categories? @relation(fields: [kateqory_Id], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Categories {
+  id        String      @id @default(uuid())
+  name      String
+  // users     Users[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
