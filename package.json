@@ -66,10 +66,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/CUraweda/Ifast-BE.git"
+    "url": "github.com/tefa-project-organization/BackendDatabase.git"
   },
-  "bugs": {
-    "url": "https://github.com/CUraweda/Ifast-BE/issues"
-  },
-  "homepage": "https://github.com/CUraweda/Ifast-BE#readme"
+  "homepage": "github.com/tefa-project-organization/BackendDatabase#readme"
 }
