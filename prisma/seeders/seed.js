@@ -1,68 +1,43 @@
-import { PrismaClient } from '@prisma/client';
-<<<<<<< HEAD
-
-import { seedForum } from './seedForum.js';
-import { seedThreads } from './seedThreads.js';
-import { seedHashtags } from './seedHashtags.js';
-import { seedComments } from './seedComments.js';
-import { seedLikes } from './seedLikes.js';
-import { seedBookmarks } from './seedBookmarks.js';
-import { seedFollow } from './seedFollow.js';
-import { seedUsers} from './userSeeder.js';
+import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
-async function seedAll() {
-  const user = await prisma.users.findFirst();
-  if (!user) throw new Error("User belum ada. Jalankan seed user dulu!");
+import seedRoleLevels from "./role_levels.seeder.js";
+import seedEmployees from "./employees.seeder.js";
+import seedClients from "./clients.seeder.js";
+import seedProjects from "./projects.seeder.js";
+import seedClientPics from "./client_pics.seeder.js";
+import seedProjectTeams from "./project_teams.seeder.js";
+import seedProjectTeamMembers from "./project_team_members.seeder.js";
+import seedDocuments from "./documents.seeder.js";
 
-  console.log("🚀 Mulai seeding...");
+async function main() {
+  console.log("Seeding role levels...");
+  await seedRoleLevels(prisma);
 
-  await seedUsers();
-  const forum = await seedForum(user);
-  const threads = await seedThreads(user, forum);
-  const hashtag = await seedHashtags(threads);
-  await seedComments(user, threads);
-  await seedLikes(user, threads);
-  await seedBookmarks(user, threads);
-  await seedFollow(user, forum);
+  console.log("Seeding employees...");
+  await seedEmployees(prisma);
 
-  console.log("✅ Semua seeder selesai!");
+  console.log("Seeding clients...");
+  await seedClients(prisma);
+
+  console.log("Seeding projects...");
+  await seedProjects(prisma);
+
+  console.log("Seeding client pics...");
+  await seedClientPics(prisma);
+
+  console.log("Seeding project teams...");
+  await seedProjectTeams(prisma);
+
+  console.log("Seeding team members...");
+  await seedProjectTeamMembers(prisma);
+
+  console.log("Seeding documents...");
+  await seedDocuments(prisma);
+
+  console.log("Done.");
 }
-
-seedAll().catch((e) => {
-  console.error("❌ Seed gagal:", e);
-  process.exit(1);
-});
 
 main()
-  .then(async () => {
-    await prisma.$disconnect();   // WAJIB
-  })
-  .catch(async (e) => {
-    console.error(e);
-    await prisma.$disconnect();   // WAJIB
-    process.exit(1);
-  });
-
-=======
-const prisma = new PrismaClient();
-
-
-import { seedUsers } from './userSeeder.js';
-
-
-async function seedAll() {
-  await seedUsers(prisma);
-
-  console.log('✅ Semua seed berhasil.');
-}
-
-seedAll()
-  .catch((e) => {
-    console.error('❌ Seed gagal:', e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
->>>>>>> 602636c1cb4d5c46af670cbab215fbaa78faaa92
+  .catch((err) => console.error(err))
+  .finally(async () => prisma.$disconnect());

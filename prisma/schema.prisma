@@ -51,8 +51,8 @@ model documents {
 
 model employees {
   id                                                Int                    @id @default(autoincrement())
-  nik                                               String                 @db.Char(16)
-  nip                                               String                 @db.Char(18)
+  nik                                               String                 @unique @db.Char(16)
+  nip                                               String                 @unique @db.Char(18)
   name                                              String                 @db.VarChar(255)
   email                                             String                 @unique @db.VarChar(100)
   phone                                             String                 @db.VarChar(50)
@@ -111,9 +111,9 @@ model projects {
 model role_levels {
   id                   Int                    @id @default(autoincrement())
   role_name            String?                @db.VarChar(50)
-  role_level           Int?
   role_price           Decimal?               @db.Decimal(10, 2)
   is_default           Boolean?               @default(true)
+  role_level           Int?
   project_team_members project_team_members[]
 }
 
