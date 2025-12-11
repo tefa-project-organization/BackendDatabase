@@ -13,10 +13,10 @@ model client_pics {
   email      String?     @db.VarChar(255)
   phone      String?     @db.VarChar(50)
   title      String?     @db.VarChar(100)
-  project_id Int
   client_id  Int
+  project_id Int?
   clients    clients     @relation(fields: [client_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  projects   projects    @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  projects   projects?   @relation(fields: [project_id], references: [id], onUpdate: NoAction)
   documents  documents[]
 }
 
@@ -51,8 +51,8 @@ model documents {
 
 model employees {
   id                                                Int                    @id @default(autoincrement())
-  nik                                               String                 @db.Char(16)
-  nip                                               String                 @db.Char(18)
+  nik                                               String                 @unique @db.Char(16)
+  nip                                               String                 @unique @db.Char(18)
   name                                              String                 @db.VarChar(255)
   email                                             String                 @unique @db.VarChar(100)
   phone                                             String                 @db.VarChar(50)
@@ -62,20 +62,19 @@ model employees {
   password                                          String                 @db.VarChar(255)
   refresh_token                                     String?
   project_team_members                              project_team_members[]
-  project_teams_project_teams_auditor_idToemployees project_teams[]        @relation("project_teams_auditor_idToemployees")
   project_teams_project_teams_manager_idToemployees project_teams[]        @relation("project_teams_manager_idToemployees")
 }
 
 model project_team_members {
-  id               Int           @id @default(autoincrement())
+  id               Int            @id @default(autoincrement())
   role_id          Int
-  project_teams_id Int
-  job_description  String?       @db.VarChar(500)
-  end_at           DateTime?     @db.Timestamp(6)
-  employee_id      Int
-  employees        employees     @relation(fields: [employee_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  project_teams    project_teams @relation(fields: [project_teams_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  role_levels      role_levels   @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  job_description  String?        @db.VarChar(500)
+  end_at           DateTime?      @db.Timestamp(6)
+  project_teams_id Int?
+  employee_id      Int?
+  employees        employees?     @relation(fields: [employee_id], references: [id], onUpdate: NoAction)
+  project_teams    project_teams? @relation(fields: [project_teams_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  role_levels      role           @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model project_teams {
@@ -83,11 +82,9 @@ model project_teams {
   project_teams_name                            String                 @db.VarChar(100)
   project_teams_email                           String                 @db.VarChar(100)
   manager_id                                    Int
-  auditor_id                                    Int?
   project_id                                    Int
   project_team_members                          project_team_members[]
-  employees_project_teams_auditor_idToemployees employees?             @relation("project_teams_auditor_idToemployees", fields: [auditor_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  employees_project_teams_manager_idToemployees employees              @relation("project_teams_manager_idToemployees", fields: [manager_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  employees_project_teams_manager_idToemployees employees              @relation("project_teams_manager_idToemployees", fields: [manager_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
   projects                                      projects               @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
@@ -97,7 +94,7 @@ model projects {
   project_name   String          @db.VarChar(255)
   project_code   String          @unique @db.Char(7)
   project_type   project_types
-  contract_value Decimal?        @db.Decimal(18, 2)
+  contract_value Decimal         @db.Decimal(18, 2)
   started_at     DateTime?       @default(now()) @db.Timestamp(6)
   finished_at    DateTime?       @db.Timestamp(6)
   deleted_at     DateTime?       @db.Timestamp(6)
@@ -108,12 +105,12 @@ model projects {
   clients        clients         @relation(fields: [client_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
-model role_levels {
-  id                   Int                    @id @default(autoincrement())
+model role {
+  id                   Int                    @id(map: "role_levels_pkey") @default(autoincrement())
   role_name            String?                @db.VarChar(50)
-  role_level           Int?
   role_price           Decimal?               @db.Decimal(10, 2)
   is_default           Boolean?               @default(true)
+  role_levels          String?                @db.VarChar(100)
   project_team_members project_team_members[]
 }
 
