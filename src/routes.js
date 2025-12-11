@@ -4,6 +4,7 @@ import projectssRouter from './core/projects/projects.router.js';
 import usersRouter from './core/users/users.router.js';
 import clientsRouter from './core/clients/clients.router.js';
 import team_members from './core/project_team_members/project_team_members.router.js';
+import project_teamsRouter from './core/project_teams/project_teams.router.js';
 const router = express.Router();
 
 
@@ -27,6 +28,10 @@ export const routeLists = [
     {
         path : '/team_members',
         route: team_members
+    },
+    {
+        path : '/project_teams',
+        route: project_teamsRouter
     }
 ]
 

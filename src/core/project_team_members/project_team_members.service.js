@@ -1,63 +1,46 @@
 import BaseService from "../../base/service.base.js";
 import prisma from "../../config/prisma.db.js";
+import ProjectsService from "../projects/projects.service.js";
 
-class project_team_membersService extends BaseService {
+class ProjectTeamMembersService extends BaseService {
   constructor() {
     super(prisma);
+    this.projectsService = new ProjectsService(); // FIXED: buat instance
   }
 
-  findAll = async (query) => {
-    const q = this.transformBrowseQuery(query);
-
-    const data = await this.db.project_team_members.findMany({
-      ...q,
-      include: {
-        employees: true,
-        project_teams: true,
-        role_levels: true
-      }
+  async recalc(teamId) {
+    const team = await this.db.project_teams.findUnique({
+      where: { id: teamId }
     });
 
-    if (query.paginate) {
-      const countData = await this.db.project_team_members.count({
-        where: q.where
-      });
-
-      return this.paginate(data, countData, q);
+    if (team?.project_id) {
+      await this.projectsService.recalcAndUpdateContractValue(team.project_id);
     }
-
-    return data;
-  };
-
-  findById = async (id) => {
-    return this.db.project_team_members.findUnique({
-      where: { id: Number(id) },
-      include: {
-        employees: true,
-        project_teams: true,
-        role_levels: true
-      }
-    });
-  };
+  }
 
   create = async (payload) => {
-    return this.db.project_team_members.create({
-      data: payload
-    });
+    const created = await this.db.project_team_members.create({ data: payload });
+    await this.recalc(payload.project_teams_id);
+    return created;
   };
 
   update = async (id, payload) => {
-    return this.db.project_team_members.update({
-      where: { id: Number(id) },
+    const existing = await this.db.project_team_members.findUnique({ where: { id } });
+    const updated = await this.db.project_team_members.update({
+      where: { id },
       data: payload
     });
+    await this.recalc(existing.project_teams_id);
+    return updated;
   };
 
   delete = async (id) => {
-    return this.db.project_team_members.delete({
-      where: { id: Number(id) }
-    });
+    const existing = await this.db.project_team_members.findUnique({ where: { id } });
+    const deleted = await this.db.project_team_members.delete({ where: { id } });
+
+    await this.recalc(existing.project_teams_id);
+    return deleted;
   };
 }
 
-export default project_team_membersService;
+export default ProjectTeamMembersService;
