@@ -1,0 +1,290 @@
+  import BaseService from '../../base/service.base.js';
+  import { Forbidden, NotFound, BadRequest } from '../../exceptions/catch.execption.js';
+  import { compare, hash } from '../../helpers/bcrypt.helper.js';
+  import jwt, { decode } from 'jsonwebtoken';
+  import { generateAccessToken, generateRefreshToken,} from '../../helpers/jwt.helper.js';
+  import prisma from '../../config/prisma.db.js';
+  import { createClient } from '@supabase/supabase-js';
+  import { sendEmail } from "../../utils/sendEmail.js";
+
+
+      const JWT_SECRET = process.env.JWT_SECRET || "secret_reset_password";
+    const supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE // atau ANON_KEY tergantung kebutuhan
+    );
+  
+  class AuthenticationService extends BaseService {
+    constructor() {
+      super(prisma);
+    }
+  forgetPassword = async (email) => {
+  console.log("FORGETPASSWORD SERVICE START:", email);
+  const user = await this.db.users.findUnique({
+    where: { email }
+  });
+
+  console.log("USER QUERY RESULT:", !!user, user ? user.email : null);
+
+  if (!user) {
+    console.log("USER NOT FOUND -> throw NotFound");
+    throw new NotFound("Account not found");
+  }
+
+  let token;
+  try {
+    token = jwt.sign(
+      { userId: user.id, email: user.email },
+      JWT_SECRET,
+      { expiresIn: "24h" }
+    );
+    console.log("RESET TOKEN CREATED");
+  } catch (err) {
+    console.error("JWT SIGN ERROR:", err);
+    throw err;
+  }
+
+  const resetLink = `http://localhost:5173/reset-password?token=${token}`;
+  console.log("RESET LINK:", resetLink);
+
+  // panggil sendEmail dengan try/catch untuk melihat error pasti
+  try {
+    console.log("CALLING sendEmail...");
+    const res = await sendEmail(
+      user.email,
+      "Reset Password",
+      `
+        <h2>Hello ${user.username}</h2>
+        <p>Click the link to reset your password:</p>
+        <a href="${resetLink}">${resetLink}</a>
+      `
+    );
+    console.log("sendEmail RESPONSE:", res);
+  } catch (err) {
+    console.error("sendEmail ERROR CAUGHT:", err && err.toString ? err.toString() : err);
+    // rethrow supaya wrapper merespon error secara jelas
+    throw err;
+  }
+
+  console.log("forgetPassword FINISHED - returning success");
+  return { message: "Email reset sent" };
+};
+
+
+
+resetPassword = async (token, newPassword) => {
+
+  let decoded;
+  try {
+    decoded = jwt.verify(token, JWT_SECRET);
+  } catch (err) {
+    throw new BadRequest("Invalid or expired token");
+  }
+
+  const user = await this.db.users.findUnique({
+    where: { id: decoded.userId }
+  });
+
+  if (!user) throw new NotFound("Account not found");
+
+  const hashedPassword = await hash(newPassword, 10);
+
+  await this.db.users.update({
+    where: { id: user.id },
+    data: { password: hashedPassword }
+  });
+
+  return { message: "Password reset successful" };
+};
+
+
+  getUserById = async (id) => {
+  const user = await this.db.users.findUnique({ where: { id } });
+  return this.exclude(user, ["password"]);
+};
+
+  revokeRefreshToken = async (userId) => {
+    await this.db.users.update({
+      where: { id: userId },
+      data: { refresh_token: null },
+    });
+  };
+
+    
+  login = async (payload) => {
+  const { identifier, password } = payload;
+
+  const isEmail = identifier.includes("@");
+  const employees = await this.db.employees.findUnique({
+    where: isEmail ? { email: identifier } : { email: identifier },
+  });
+
+  if (!employees) throw new NotFound("Account not found");
+
+  const pwValid = await compare(password, employees.password);
+  if (!pwValid) throw new BadRequest("Password is incorrect");
+
+  // =====================================================
+
+  // Jika lolos ban check, generate token
+  const access_token = await generateAccessToken(employees);
+  const refresh_token = await generateRefreshToken(employees);
+
+  await this.db.employees.update({
+    where: { id: employees.id },
+    data: { refresh_token }, 
+  });
+
+  return {
+    employees: this.exclude(employees, ["password"]),
+    token: { access_token, refresh_token },
+  };
+};
+
+
+
+
+    refreshToken = async (incomingRefreshToken) => {
+
+  if (!incomingRefreshToken) {
+    throw new BadRequest("Refresh token missing");
+  }
+
+  // Decode untuk ambil email / id (jangan verify dulu)
+  const payload = jwt.decode(incomingRefreshToken);
+  if (!payload) throw new Forbidden("Invalid refresh token");
+
+  const user = await this.db.users.findUnique({
+    where: { email: payload.email },
+  });
+
+  if (!user) throw new NotFound("Account not found");
+
+  // 🔥 Validasi refresh token terhadap database
+  if (user.refresh_token !== incomingRefreshToken) {
+    throw new Forbidden("Refresh token has been rotated or is invalid");
+  }
+
+  // Jika cocok → generate token baru
+  const access_token = await generateAccessToken(user);
+  const new_refresh_token = await generateRefreshToken(user);
+
+  // 🔥 Update refresh token di DB (rotate)
+  await this.db.users.update({
+    where: { id: user.id },
+    data: { refresh_token: new_refresh_token },
+  });
+
+  return {
+    user: this.exclude(user, ["password"]),
+    token: { access_token, refresh_token: new_refresh_token },
+  };
+};
+
+
+register = async (payload) => {
+  const { name, email, password, nik, nip, phone, address, position, status } = payload || {};
+
+  // VALIDASI INPUT
+  if (!email) throw new BadRequest("Email is required");
+  if (!password) throw new BadRequest("Password is required");
+
+  // CEK EMAIL
+  const existing = await this.db.employees.findUnique({ where: { email } });
+  if (existing) throw new Forbidden("Email already registered");
+
+  
+  // 🔥 INSERT USER
+  const employees = await this.db.employees.create({
+    data: {
+      nik,
+      nip,
+      name,
+      email,
+      phone,
+      address,
+      position,
+      status,
+      password: await hash(password, 10),
+    },
+  });
+
+  // SANITIZED RETURN
+  const sanitized = {
+    id: employees.id,
+    nik: employees.nik,
+    nip: employees.nip,
+    name: employees.name,
+    email: employees.email,
+    phone: employees.phone,
+    address: employees.address,
+    position: employees.position,
+    status: employees.status,
+    created_at: employees.created_at,
+    
+  };
+
+  return {
+    data: sanitized,
+  };
+};
+
+
+  updateUser = async (id, payload) => {
+    const { username, bio, profile_image } = payload;
+
+    // 1. Pastikan user ada
+    const user = await this.db.users.findUnique({ where: { id } });
+    if (!user) throw new NotFound("User not found");
+
+    // 2. Jika tidak ada data yang dikirim, tolak
+    if (!username && !bio && !profile_image) {
+      throw new BadRequest("At least one field must be provided to update");
+    }
+
+    // 3. Jika username ingin diubah → cek apakah sudah dipakai orang lain
+    if (username) {
+      const existingUsername = await this.db.users.findFirst({
+        where: {
+          username,
+          NOT: { id }
+        }
+      });
+
+      if (existingUsername) {
+        throw new Forbidden("Username already in use by another user");
+      }
+    }
+
+    // 4. Lanjut update
+    const updated = await this.db.users.update({
+      where: { id },
+      data: {
+        username: username ?? user.username,
+        bio: bio ?? user.bio,
+        profile_image: profile_image ?? user.profile_image,
+      },
+    });
+
+    // 5. Sanitasi → hilangkan field sensitif
+    const sanitized = {
+      id: updated.id,
+      username: updated.username,
+      email: updated.email,
+      bio: updated.bio,
+      profile_image: updated.profile_image,
+      created_at: updated.created_at,
+    };
+
+    return {
+      data: sanitized,
+      message: "Profile updated successfully",
+    };
+  };
+
+
+
+
+  }
+
+  export default AuthenticationService;

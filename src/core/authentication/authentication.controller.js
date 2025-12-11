@@ -1,0 +1,136 @@
+import BaseController from '../../base/controller.base.js';
+  import { NotFound } from '../../exceptions/catch.execption.js';
+  import AuthenticationService from './authentication.service.js';
+import { encrypt, decrypt } from "../../helpers/encryption.helper.js";
+import status from 'http-status';
+
+
+  class AuthenticationController extends BaseController {
+    #service;
+
+    constructor() {
+      super();
+      this.#service = new AuthenticationService();
+    }
+
+  me = this.wrapper(async (req, res) => {
+  const user = await this.#service.getUserById(req.user.id);
+
+
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  return this.ok(res, { user });
+});
+
+
+  login = this.wrapper(async (req, res) => {
+  const data = await this.#service.login(req.body);
+
+  // encrypt token (kamu sudah pakai helper encrypt)
+  const accessEnc = encrypt(data.token.access_token);
+  const refreshEnc = encrypt(data.token.refresh_token);
+
+  // set cookies (sesuaikan flags)
+  res.cookie("cookies_access_token", accessEnc, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    maxAge: 1000 * 60 * 15,
+  });
+
+  res.cookie("cookies_refresh_token", refreshEnc, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    maxAge: 1000 * 60 * 60 * 24 * 7,
+  });
+
+  if (data.employees.refresh_token) {
+    delete data.employees.refresh_token;
+  }
+
+  return this.ok(res,{
+    employees: data.employees,
+  });
+
+});
+
+refresh = this.wrapper(async (req, res) => {
+  const encryptedRefresh = req.cookies.cookies_refresh_token;
+
+  if (!encryptedRefresh) {
+    return res.status(401).json({ message: "No refresh token provided" });
+  }
+
+  const refreshToken = decrypt(encryptedRefresh);
+
+  const data = await this.#service.refreshToken(refreshToken);
+
+  const newAccessEnc = encrypt(data.token.access_token);
+  const newRefreshEnc = encrypt(data.token.refresh_token);
+
+  // 🔥 Set cookie dengan refresh token baru
+  res.cookie("cookies_access_token", newAccessEnc, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    maxAge: 1000 * 60 * 15,  
+  });
+
+  res.cookie("cookies_refresh_token", newRefreshEnc, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    maxAge: 1000 * 60 * 60 * 24 * 7,
+  });
+
+  if (data.user.refresh_token) {
+    delete data.user.refresh_token; 
+  }
+
+  return this.ok(res, {
+    user: data.user,
+  }, "Token refreshed successfully");
+
+});
+
+
+    register = this.wrapper(async (req, res) => {
+      const data = await this.#service.register(req.body);
+      return this.ok(res, data, 'Registration successful');
+    });  
+    
+    update = this.wrapper(async (req, res) => {
+      const data = await this.#service.updateUser(req.body);
+      return this.ok(res, data, 'Registration successful');
+    });
+
+    forgetPassword = this.wrapper(async (req, res) => {
+      const { email } = req.body;
+      const data = await this.#service.forgetPassword(email);
+      return this.ok(res, data, "Reset password link sent");
+    });
+
+    resetPassword = this.wrapper(async (req, res) => {
+      const { token, newPassword } = req.body;
+      const data = await this.#service.resetPassword(token, newPassword);
+      return this.ok(res, data, "Password reset successful");
+    });
+
+
+    logout = this.wrapper(async (req, res) => {
+  // jika kamu punya user id di req.user (dari middleware auth), revoke di DB
+  if (req.user && req.user.id) {
+    await this.#service.revokeRefreshToken(req.user.id);
+  }
+
+  res.clearCookie("cookies_access_token");
+  res.clearCookie("cookies_refresh_token");
+
+  return res.json({ message: "Logged out" });
+});
+  }
+
+  export default AuthenticationController;
