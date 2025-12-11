@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+<<<<<<< HEAD
 
 import { seedForum } from './seedForum.js';
 import { seedThreads } from './seedThreads.js';
@@ -43,3 +44,25 @@ main()
     process.exit(1);
   });
 
+=======
+const prisma = new PrismaClient();
+
+
+import { seedUsers } from './userSeeder.js';
+
+
+async function seedAll() {
+  await seedUsers(prisma);
+
+  console.log('✅ Semua seed berhasil.');
+}
+
+seedAll()
+  .catch((e) => {
+    console.error('❌ Seed gagal:', e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
+>>>>>>> 602636c1cb4d5c46af670cbab215fbaa78faaa92

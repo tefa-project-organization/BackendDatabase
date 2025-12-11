@@ -90,7 +90,6 @@ const errorHandler = (err, req, res, next) => {
     err.statusCode ||
     httpStatus.StatusCodes.INTERNAL_SERVER_ERROR ||
     500;
-
   res.status(statusCode);
   return res.json({
     errors: {

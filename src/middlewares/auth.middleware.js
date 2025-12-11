@@ -120,7 +120,6 @@ export default function auth(roles) {
           )
         );
       }
-
       console.error(e);
       return next(e);
     }
