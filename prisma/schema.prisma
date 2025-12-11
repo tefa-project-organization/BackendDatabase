@@ -110,7 +110,11 @@ model role {
   role_name            String?                @db.VarChar(50)
   role_price           Decimal?               @db.Decimal(10, 2)
   is_default           Boolean?               @default(true)
+<<<<<<< HEAD
   role_levels          String?                @db.VarChar(100)
+=======
+  role_level           Int?
+>>>>>>> 9b5ed32246895e24ef8c924c0d30cf5ba5b623a6
   project_team_members project_team_members[]
 }
 
