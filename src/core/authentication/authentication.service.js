@@ -7,7 +7,7 @@
   import { createClient } from '@supabase/supabase-js';
 
 
-      const JWT_SECRET = process.env.JWT_SECRET || "secret_reset_password";
+  const JWT_SECRET = process.env.JWT_SECRET || "secret_reset_password";
     const supabase = createClient(
       process.env.SUPABASE_URL,
       process.env.SUPABASE_SERVICE_ROLE // atau ANON_KEY tergantung kebutuhan
