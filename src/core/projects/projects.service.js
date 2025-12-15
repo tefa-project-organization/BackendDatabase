@@ -53,7 +53,7 @@ class ProjectsService extends BaseService {
   };
 
   findById = async (id) => {
-    return await this.db.projects.findUnique({ where: { id } });
+    return await this.db.projects.findUnique({ where: { id: Number(id) } });
   };
 
   create = async (payload) => {
@@ -69,13 +69,44 @@ class ProjectsService extends BaseService {
   };
 
   update = async (id, payload) => {
-    await this.db.projects.update({
-      where: { id },
-      data: payload
+  const projectId = Number(id);
+
+  // 1. Pastikan project ada
+  const project = await this.db.projects.findUnique({
+    where: { id: projectId }
+  });
+
+  if (!project) {
+    throw new Error("Projects not found");
+  }
+
+  // 2. Jika project_code dikirim, cek unique
+  if (payload.project_code) {
+    const codeExists = await this.db.projects.findFirst({
+      where: {
+        project_code: payload.project_code,
+        NOT: { id: projectId }
+      }
     });
 
-    return this.recalcAndUpdateContractValue(id);
-  };
+    if (codeExists) {
+      throw new Error("Project code already used");
+    }
+  }
+
+  // 3. Jangan izinkan contract_value manual
+  const { contract_value, ...safePayload } = payload;
+
+  // 4. Update
+  await this.db.projects.update({
+    where: { id: projectId },
+    data: safePayload
+  });
+
+  // 5. Recalculate contract value
+  return await this.recalcAndUpdateContractValue(projectId);
+};
+
 
   delete = async (id) => {
     return await this.db.projects.delete({ where: { id } });

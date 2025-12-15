@@ -12,7 +12,14 @@ export const projectsValidator = {
     finished_at : Joi.date().optional()
   }),
   update: Joi.object({
-    // no-data
+    project_name: Joi.string().max(100).optional(),
+    project_description: Joi.string().max(500).optional(),
+    project_code: Joi.string().max(50).optional(),
+    project_type: Joi.string().max(50).optional(),
+    client_id : Joi.number().optional(),
+    contract_value : Joi.number().optional(),
+    started_at : Joi.date().optional(),
+    finished_at : Joi.date().optional()
   }),
 };
 
