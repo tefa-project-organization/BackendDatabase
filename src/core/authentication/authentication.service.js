@@ -97,10 +97,11 @@ resetPassword = async (token, newPassword) => {
 };
 
 
-  getUserById = async (id) => {
-  const user = await this.db.users.findUnique({ where: { id } });
-  return this.exclude(user, ["password"]);
+  getEmployeeById = async (id) => {
+  const employees = await this.db.employees.findUnique({ where: { id } });
+  return this.exclude(employees, ["password"]);
 };
+
 
   revokeRefreshToken = async (userId) => {
     await this.db.users.update({
@@ -109,13 +110,12 @@ resetPassword = async (token, newPassword) => {
     });
   };
 
-    
   login = async (payload) => {
   const { identifier, password } = payload;
 
   const isEmail = identifier.includes("@");
   const employees = await this.db.employees.findUnique({
-    where: isEmail ? { email: identifier } : { email: identifier },
+    where: isEmail ? { email: identifier } : { nik: identifier },
   });
 
   if (!employees) throw new NotFound("Account not found");
@@ -144,41 +144,38 @@ resetPassword = async (token, newPassword) => {
 
 
     refreshToken = async (incomingRefreshToken) => {
-
   if (!incomingRefreshToken) {
     throw new BadRequest("Refresh token missing");
   }
 
-  // Decode untuk ambil email / id (jangan verify dulu)
+  // decode tanpa verify
   const payload = jwt.decode(incomingRefreshToken);
   if (!payload) throw new Forbidden("Invalid refresh token");
 
-  const user = await this.db.users.findUnique({
+  const employees = await this.db.employees.findUnique({
     where: { email: payload.email },
   });
 
-  if (!user) throw new NotFound("Account not found");
+  if (!employees) throw new NotFound("Account not found");
 
-  // 🔥 Validasi refresh token terhadap database
-  if (user.refresh_token !== incomingRefreshToken) {
+  if (employees.refresh_token !== incomingRefreshToken) {
     throw new Forbidden("Refresh token has been rotated or is invalid");
   }
 
-  // Jika cocok → generate token baru
-  const access_token = await generateAccessToken(user);
-  const new_refresh_token = await generateRefreshToken(user);
+  const access_token = await generateAccessToken(employees);
+  const new_refresh_token = await generateRefreshToken(employees);
 
-  // 🔥 Update refresh token di DB (rotate)
-  await this.db.users.update({
-    where: { id: user.id },
+  await this.db.employees.update({
+    where: { id: employees.id },
     data: { refresh_token: new_refresh_token },
   });
 
   return {
-    user: this.exclude(user, ["password"]),
+    employees: this.exclude(employees, ["password"]),
     token: { access_token, refresh_token: new_refresh_token },
   };
 };
+
 
 
 register = async (payload) => {

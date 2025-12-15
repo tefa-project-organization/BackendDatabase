@@ -3,7 +3,6 @@ dotenv.config()  // HARUS PALING ATAS sebelum import apapun
 
 import express from 'express';
 import cors from 'cors';
-import bodyParser from 'body-parser';
 import httpStatus from 'http-status-codes';
 import fs from 'fs';
 import path from 'path';
@@ -14,9 +13,12 @@ import handleError from './exceptions/handler.exception.js';
 import cookieParser from "cookie-parser";
 
 const app = express();
-app.use(cookieParser());
-app.use(express.json()); // WAJIB
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+
+
 
 
 
@@ -39,19 +41,10 @@ app.use(
   })
 );
 
-app.use(
-  bodyParser.urlencoded({
-    limit: '50mb',
-    parameterLimit: 50000,
-    extended: true,
-  })
-);
-app.use(
-  bodyParser.raw({ type: ['application/json', 'application/vnd.api+json'] })
-);
-app.use(bodyParser.text({ type: 'text/html' }));
+
 
 app.use('/api/v1', router);
+
 
 app.get('/api/download', (req, res, next) => {
   const filePath = req.query.path;

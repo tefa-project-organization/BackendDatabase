@@ -15,7 +15,7 @@ const publicKey = fs.readFileSync(publicKeyPath, 'utf8');
 
 export const generateAccessToken = async (user) => {
   const payload = {
-    userId: user.id,
+    employeesId: user.id,
     email: user.email,
   };
 
@@ -38,7 +38,7 @@ export const getTokenExpires = async (token) => {
 
 export const generateRefreshToken = async (user) => {
   const payload = {
-    userId: user.id,
+    employeesId: user.id,
     email: user.email
   };
 
@@ -50,7 +50,7 @@ export const generateRefreshToken = async (user) => {
 
 export const generateResetPasswordToken = (userId) => {
   const payload = {
-    uid: userId,
+    uid: employeesId,
   };
 
   return jwt.sign(payload, privateKey, {

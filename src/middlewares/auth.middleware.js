@@ -6,110 +6,77 @@ import prisma from '../config/prisma.db.js';
 import { decrypt } from "../helpers/encryption.helper.js";
 
 export default function auth(roles) {
-
   return async (req, res, next) => {
     try {
       const encryptedToken = req.cookies?.cookies_access_token;
+      console.log("Encrypted Cookie:", encryptedToken);
 
       if (!encryptedToken) {
-        return next(
-          new ApiError(
-            httpStatus.StatusCodes.UNAUTHORIZED,
-            'NO_AUTHORIZATION',
-            'Please Login First'
-          )
-        );
+        return next(new ApiError(401, 'NO_AUTHORIZATION', 'Please Login First'));
       }
 
-      // Decrypt cookie → JWT string
+      // 1. decrypt
       let token;
       try {
         token = decrypt(encryptedToken);
+        console.log("Decrypted Token:", token);
       } catch (err) {
+        console.error("Decrypt error:", err);
         return next(new Unauthenticated("Invalid encrypted token"));
       }
 
-      // Verify JWT
+      // 2. verify jwt
       let decoded;
       try {
         decoded = verifyToken(token);
+        console.log("Decoded JWT:", decoded);
       } catch (err) {
+        console.error("JWT Verify Error:", err);
         return next(new Unauthenticated("Invalid or expired token"));
       }
 
-      const userId = decoded?.userId;
-      if (!userId) {
+      const employeesId = decoded?.userId || decoded?.employeesId;
+      if (!employeesId) {
         return next(new Unauthenticated("Teu login"));
       }
 
-      req.userId = userId;
-
-      // Fetch user
-      const user = await prisma.users.findFirst({
-        where: { id: userId },
-        include: { role_users: true },
+      // 3. FETCH EMPLOYEE DARI DB
+      const employees = await prisma.employees.findUnique({
+        where: { id: employeesId }
       });
 
-      if (!user) {
-        return next(
-          new ApiError(
-            httpStatus.StatusCodes.UNAUTHORIZED,
-            'NO_DATA',
-            'Please Authenticate'
-          )
-        );
+      if (!employees) {
+        return next(new Unauthenticated("Employee not found"));
       }
 
-      // =====================================================================
-      // CHECK BAN STATUS
-      // =====================================================================
-
-      // 1. Jika sedang diban dan waktunya belum lewat → block login
-      if (user.status === false) {
-  if (user.duration && user.duration > new Date()) {
-    return next(
-      new Unauthenticated(
-        "Your account is temporarily banned until " + user.duration
-      )
-    );
-  }
-}
-
-
-      // 2. Jika ban sudah lewat → auto unban
-      if (user.status === false && user.duration && user.duration <= new Date()) {
-  await prisma.users.update({
-    where: { id: user.id },
-    data: {
-      status: true,
-      duration: null  
-    }
-  });
-  user.status = true;
-}
-
-
-      // =====================================================================
-
-      // Role check
-      if (roles && roles.length > 0) {
-        const userRoleCodes = user.role_users.map(r => r.roles.code);
-        const hasAccess = roles.some(r => userRoleCodes.includes(r));
-
-        if (!hasAccess) {
+      // 4. BAN CHECK
+      if (employees.status === false) {
+        if (employees.duration && employees.duration > new Date()) {
           return next(
-            new ApiError(
-              httpStatus.StatusCodes.FORBIDDEN,
-              'NO_ACCESS',
-              'Unauthorized'
-            )
+            new Unauthenticated("Your account is banned until " + employees.duration)
           );
         }
       }
 
-      req.user = user;
-      next();
+      // 5. AUTO UNBAN
+      if (
+        employees.status === false &&
+        employees.duration &&
+        employees.duration <= new Date()
+      ) {
+        await prisma.employees.update({
+          where: { id: employees.id },
+          data: { status: true, duration: null },
+        });
 
+        employees.status = true;
+      }
+
+      // save ke req
+      req.employees = employees;
+      req.employeesId = employees.id;
+
+      next();
     } catch (e) {
       if (e.message === 'jwt expired') {
         return next(

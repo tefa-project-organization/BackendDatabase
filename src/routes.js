@@ -1,8 +1,10 @@
 import express from 'express';
 import authenticationRouter from './core/authentication/authentication.router.js';
-import clientpic from './core/client_pic/client_pic.router.js';
-import project from './core/projects/projects.router.js';
+import projectssRouter from './core/projects/projects.router.js';
 import usersRouter from './core/users/users.router.js';
+import clientsRouter from './core/clients/clients.router.js';
+import team_members from './core/project_team_members/project_team_members.router.js';
+import project_teamsRouter from './core/project_teams/project_teams.router.js';
 const router = express.Router();
 
 
@@ -16,15 +18,21 @@ export const routeLists = [
         route: usersRouter
     },
     {
-        path : '/clientpic',
-        route: clientpic
+        path : '/projects',
+        route: projectssRouter
     },
-    {   
-        path : '/project',
-        route: project
+    {
+        path : '/clients',
+        route: clientsRouter
+    },
+    {
+        path : '/team_members',
+        route: team_members
+    },
+    {
+        path : '/project_teams',
+        route: project_teamsRouter
     }
-
-
 ]
 
 routeLists.forEach((route) => {

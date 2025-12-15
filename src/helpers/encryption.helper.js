@@ -25,16 +25,27 @@ export function encrypt(text) {
 }
 
 export function decrypt(encryptedText) {
-  const [ivStr, tagStr, encrypted] = encryptedText.split(":");
-
-  const iv = Buffer.from(ivStr, "base64");
-  const tag = Buffer.from(tagStr, "base64");
-
-  const decipher = crypto.createDecipheriv(ALGO, SECRET, iv);
-  decipher.setAuthTag(tag);
-
-  let decrypted = decipher.update(encrypted, "base64", "utf8");
-  decrypted += decipher.final("utf8");
-
-  return decrypted;
+  try {
+    if (!encryptedText || typeof encryptedText !== 'string') {
+      throw new Error('Encrypted text missing or not a string');
+    }
+    const parts = encryptedText.split(':');
+    if (parts.length !== 3) {
+      console.log("DECRYPT FORMAT INVALID, parts:", parts.length);
+      throw new Error('Invalid token format');
+    }
+    const [ivStr, tagStr, encrypted] = parts;
+    const iv = Buffer.from(ivStr, "base64");
+    const tag = Buffer.from(tagStr, "base64");
+    const decipher = crypto.createDecipheriv(ALGO, SECRET, iv);
+    decipher.setAuthTag(tag);
+    let decrypted = decipher.update(encrypted, "base64", "utf8");
+    decrypted += decipher.final("utf8");
+    return decrypted;
+  } catch (e) {
+    console.error("DECRYPT ERROR:", e.message);
+    return null;
+  }
 }
+
+
