@@ -23,6 +23,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+
 /* ==========================
    CORS CONFIG (WAJIB BENAR)
 ========================== */
@@ -44,10 +45,18 @@ const corsOptions = {
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: [
+  "Content-Type",
+  "Authorization",
+  "X-Requested-With",
+  "Accept"
+],
+
 };
 
 app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
+
 
 
 
