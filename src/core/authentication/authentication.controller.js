@@ -126,8 +126,18 @@ refresh = this.wrapper(async (req, res) => {
     await this.#service.revokeRefreshToken(req.user.id);
   }
 
-  res.clearCookie("cookies_access_token");
-  res.clearCookie("cookies_refresh_token");
+  res.clearCookie("cookies_access_token", {
+  httpOnly: true,
+  secure: true,
+  sameSite: "none",
+});
+
+res.clearCookie("cookies_refresh_token", {
+  httpOnly: true,
+  secure: true,
+  sameSite: "none",
+});
+
 
   return res.json({ message: "Logged out" });
 });
