@@ -1,133 +1,170 @@
-import dotenv from 'dotenv'
-dotenv.config()  // HARUS PALING ATAS sebelum import apapun
+import dotenv from "dotenv";
+dotenv.config(); // HARUS PALING ATAS
 
-import express from 'express';
-import cors from 'cors';
-import httpStatus from 'http-status-codes';
-import fs from 'fs';
-import path from 'path';
-import http from 'http';
-import { Server } from 'socket.io';
-import router from './routes.js';
-import handleError from './exceptions/handler.exception.js';
+import express from "express";
+import cors from "cors";
+import httpStatus from "http-status-codes";
+import fs from "fs";
+import path from "path";
+import http from "http";
+import { Server } from "socket.io";
+import router from "./routes.js";
+import handleError from "./exceptions/handler.exception.js";
 import cookieParser from "cookie-parser";
 
 const app = express();
+const port = process.env.PORT || 3000;
+
+/* ==========================
+   BASIC MIDDLEWARE
+========================== */
+app.disable("x-powered-by");
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.disable('x-powered-by');
-const port = process.env.PORT || 3000;
 
+/* ==========================
+   CORS CONFIG (WAJIB BENAR)
+========================== */
 const allowedOrigins = [
-  'http://localhost:5173',
-  'https://frontend-anda.vercel.app' // GANTI sesuai frontend prod Anda
+  "http://localhost:5173",
+  "https://frontend-anda.vercel.app", // GANTI sesuai frontend prod
 ];
 
 const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+  origin: (origin, callback) => {
+    // allow server-to-server / postman
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, origin); // ⚠️ HARUS origin, BUKAN true
     }
+
+    return callback(new Error("Not allowed by CORS"));
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 };
 
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
 
+/* ==========================
+   PREFLIGHT FIX (VERCEL)
+========================== */
+app.options("*", (req, res) => {
+  const origin = req.headers.origin;
 
+  if (allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+  }
 
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+  );
 
+  return res.sendStatus(204);
+});
 
-app.use('/api/v1', router);
+/* ==========================
+   ROUTES
+========================== */
+app.use("/api/v1", router);
 
-
-app.get('/api/download', (req, res, next) => {
+/* ==========================
+   FILE DOWNLOAD
+========================== */
+app.get("/api/download", (req, res, next) => {
   const filePath = req.query.path;
+
   if (!filePath) {
     return res.status(httpStatus.BAD_REQUEST).json({
       status: false,
       code: httpStatus.BAD_REQUEST,
-      message: 'File path not provided.',
+      message: "File path not provided.",
     });
   }
 
-  // Ubah path relatif menjadi absolute
   const resolvedPath = path.resolve(filePath);
 
-  // Periksa apakah file ada secara asinkron
   fs.access(resolvedPath, fs.constants.F_OK, (err) => {
     if (err) {
       return res.status(httpStatus.NOT_FOUND).json({
         status: false,
         code: httpStatus.NOT_FOUND,
-        message: 'File not found.',
+        message: "File not found.",
       });
     }
-    // Kirim file secara langsung tanpa pipe
+
     res.sendFile(resolvedPath, (err) => {
-      if (err) {
-        console.error('Error sending file:', err);
-        return next(err);
-      }
+      if (err) return next(err);
     });
   });
 });
 
-app.route('/').get((req, res) => {
-  return res.json({
-    message: 'Welcome to the API',
-  });
+/* ==========================
+   ROOT
+========================== */
+app.get("/", (req, res) => {
+  res.json({ message: "Welcome to the API" });
 });
 
+/* ==========================
+   404 HANDLER
+========================== */
 app.use((req, res) => {
-  return res.json({
+  res.status(httpStatus.StatusCodes.NOT_FOUND).json({
     errors: {
-      status: res.statusCode,
+      status: httpStatus.StatusCodes.NOT_FOUND,
       data: null,
       error: {
         code: httpStatus.StatusCodes.NOT_FOUND,
-        message: 'ENDPOINT_NOTFOUND',
+        message: "ENDPOINT_NOTFOUND",
       },
     },
   });
 });
 
+/* ==========================
+   ERROR HANDLER
+========================== */
 app.use(handleError);
 
+/* ==========================
+   SERVER + SOCKET.IO
+========================== */
 const server = http.createServer(app);
+
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: allowedOrigins,
     credentials: true,
     methods: ["GET", "POST"],
   },
 });
 
-
-io.on('connection', (socket) => {
-  socket.on('disconnect', () => {
-    console.log('Client disconnected: ' + socket.id);
+io.on("connection", (socket) => {
+  socket.on("disconnect", () => {
+    console.log("Client disconnected:", socket.id);
   });
 });
 
-// startWhatsApp(io)
-// .then(() => {
-//     console.log('WhatsApp client started');
-//   })
-//   .catch((err) => console.error(err));
-
-
+/* ==========================
+   START SERVER
+========================== */
 server.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  console.log(`Server running on port ${port}`);
 });
-// parsing biginteger
+
+/* ==========================
+   BIGINT FIX
+========================== */
 BigInt.prototype.toJSON = function () {
-  const int = Number.parseInt(this.toString());
-  return int ?? this.toString();
+  return Number(this.toString());
 };
