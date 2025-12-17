@@ -1,13 +1,17 @@
 import { Router } from "express";
 import validatorMiddleware from "../../middlewares/validator.middleware.js";
-import projectsController from "./projects.controller.js";
-import projectsValidator from "./projects.validator.js";
+import documentsController from "./documents.controller.js";
+import documentsValidator from "./documents.validator.js";
 import { baseValidator } from "../../base/validator.base.js";
 import auth from "../../middlewares/auth.middleware.js";
+import multer from "multer";
+
+const upload = multer();
+
 
 const r = Router(),
-  validator = projectsValidator,
-  controller = new projectsController();
+  validator = documentsValidator,
+  controller = new documentsController();
 
 r.get(
   "/show-all",
@@ -19,10 +23,11 @@ r.get("/show-one/:id", controller.findById);
 
 r.post(
   "/create",
-  auth(),
+  // auth(['ADMIN']),
+  upload.single("document"),                
   validatorMiddleware({ body: validator.create }),
   controller.create
-  );
+);
   
   r.put(
     "/update/:id",
@@ -33,5 +38,5 @@ r.post(
     
 r.delete("/delete/:id", auth(['ADMIN']), controller.delete);
 
-const projectsRouter = r;
-export default projectsRouter;
+const documentsRouter = r;
+export default documentsRouter;
