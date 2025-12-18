@@ -82,6 +82,16 @@ class documentsService extends BaseService {
   return publicData.publicUrl;
 }
 
+async deleteDocumentFile(publicUrl) {
+  if (!publicUrl) return;
+
+  const bucket = "document_file";
+  const path = publicUrl.split(`${bucket}/`)[1];
+  if (!path) return;
+
+  await supabase.storage.from(bucket).remove([path]);
+}
+
 
   findAll = async (query) => {
     const q = this.transformBrowseQuery(query);
@@ -95,7 +105,7 @@ class documentsService extends BaseService {
   };
 
   findById = async (id) => {
-    const data = await this.db.documents.findUnique({ where: { id } });
+    const data = await this.db.documents.findUnique({ where: { id: Number(id) } });
     return data;
   };
 
@@ -131,13 +141,58 @@ create = async (payload, documentFile) => {
 };
 
 
-  update = async (id, payload) => {
-    const data = await this.db.documents.update({ where: { id }, data: payload });
-    return data;
-  };
+updateWithFile = async (id, payload, documentFile) => {
+  return await this.db.$transaction(async (tx) => {
+    const existing = await tx.documents.findUnique({
+      where: { id: Number(id) },
+    });
+
+    if (!existing) {
+      throw new Error("Document not found");
+    }
+
+    // update data non-file dulu
+    const updated = await tx.documents.update({
+      where: { id: Number(id) },
+      data: {
+        number: payload.number,
+        date_signed: payload.date_signed,
+        project_id: payload.project_id,
+        client_id: payload.client_id,
+        client_pic_id: payload.client_pic_id,
+        document_types: payload.document_types_id
+          ? { connect: { id: payload.document_types_id } }
+          : undefined,
+      },
+    });
+
+    // kalau tidak upload file → selesai
+    if (!documentFile) return updated;
+
+    // upload file baru
+    const newUrl = await this.uploadDocument(documentFile, updated.id);
+
+    // update url di DB
+    await tx.documents.update({
+      where: { id: updated.id },
+      data: { document_url: newUrl },
+    });
+
+    // OPTIONAL: hapus file lama (recommended)
+    try {
+      await this.deleteDocumentFile(existing.document_url);
+    } catch (err) {
+      console.warn("Failed deleting old document:", err.message);
+    }
+
+    updated.document_url = newUrl;
+    return updated;
+  });
+};
+
 
   delete = async (id) => {
-    const data = await this.db.documents.delete({ where: { id } });
+    const data = await this.db.documents.delete({  where: { id:  Number(id) }});
     return data;
   };
 }
