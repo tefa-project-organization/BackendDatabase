@@ -7,6 +7,29 @@ class ProjectsService extends BaseService {
     super(prisma);
   }
 
+  generateProjectCode = async () => {
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+  while (true) {
+    const randomLetters =
+      letters[Math.floor(Math.random() * 26)] +
+      letters[Math.floor(Math.random() * 26)];
+
+    const randomNumbers = Math.floor(Math.random() * 1000)
+      .toString()
+      .padStart(3, "0");
+
+    const code = `${randomLetters}-${randomNumbers}`;
+
+    const exists = await this.db.projects.findUnique({
+      where: { project_code: code },
+      select: { id: true }
+    });
+
+    if (!exists) return code;
+  }
+};
+
   // ================================================
   // HITUNG NILAI KONTRAK PROJECT DARI SEMUA TEAM + MEMBER
   // ================================================
@@ -42,24 +65,59 @@ class ProjectsService extends BaseService {
   };
 
   findAll = async (query) => {
-    const q = this.transformBrowseQuery(query);
-    const data = await this.db.projects.findMany({ ...q });
+  const q = this.transformBrowseQuery(query);
 
-    if (query.paginate) {
-      const countData = await this.db.projects.count({ where: q.where });
-      return this.paginate(data, countData, q);
-    }
-    return data;
+  q.where = {
+    ...q.where,
+    is_deleted: false
   };
+
+  const data = await this.db.projects.findMany(q);
+
+  if (query.paginate) {
+    const countData = await this.db.projects.count({ where: q.where });
+    return this.paginate(data, countData, q);
+  }
+
+  return data;
+};
+
 
   findById = async (id) => {
-    return await this.db.projects.findUnique({ where: { id } });
-  };
+  const projectId = Number(id);
+  if (isNaN(projectId)) {
+    throw new Error("project_id harus berupa angka");
+  }
+
+  return await this.db.projects.findFirst({
+    where: {
+      id: projectId,
+      is_deleted: false
+    },
+    include: {
+      project_teams: {
+        include: {
+          project_team_members: {
+            include: {
+              role_levels: true
+            }
+          }
+        }
+      }
+    }
+  });
+};
+
+
 
   create = async (payload) => {
+    const projectCode = await this.generateProjectCode();
+
     const project = await this.db.projects.create({
       data: {
         ...payload,
+        project_code: projectCode,
+        is_deleted: false,
         contract_value: 0 // default
       }
     });
@@ -68,18 +126,55 @@ class ProjectsService extends BaseService {
     return this.recalcAndUpdateContractValue(project.id);
   };
 
-  update = async (id, payload) => {
-    await this.db.projects.update({
-      where: { id },
-      data: payload
-    });
+  update = async (project_id, payload) => {
+  const filteredPayload = Object.fromEntries(
+    Object.entries(payload).filter(([_, value]) => {
+      if (value === undefined) return false;
+      if (value === null) return false;
+      if (typeof value === "string" && value.trim() === "") return false;
+      return true;
+    })
+  );
 
-    return this.recalcAndUpdateContractValue(id);
-  };
+  const id = Number(project_id);
+  if (isNaN(id)) {
+    throw new Error("project_id harus berupa angka");
+  }
+
+  const project = await this.findById(id);
+  if (!project) {
+    throw new Error("project tidak ditemukan atau sudah dihapus");
+  }
+
+  if (Object.keys(filteredPayload).length === 0) {
+    return this.findById(id);
+  }
+
+  await this.db.projects.update({
+    where: { id },
+    data: filteredPayload,
+  });
+
+  return this.recalcAndUpdateContractValue(id);
+};
+
+
 
   delete = async (id) => {
-    return await this.db.projects.delete({ where: { id } });
-  };
+  const projectId = Number(id);
+  if (isNaN(projectId)) {
+    throw new Error("project_id harus berupa angka");
+  }
+
+  return await this.db.projects.update({
+    where: { id: projectId },
+    data: {
+      is_deleted: true,
+      deleted_at: new Date()
+    }
+  });
+};
+
 }
 
 export default ProjectsService;

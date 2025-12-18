@@ -34,8 +34,8 @@ class project_teamsController extends BaseController {
 
   delete = this.wrapper(async (req, res) => {
     const data = await this.#service.delete(req.params.id);
-    return this.noContent(res, "project_teams successfully deleted");
+    return this.ok(res, data, "project_teams successfully deleted");
   });
-}
+}   
 
 export default project_teamsController;

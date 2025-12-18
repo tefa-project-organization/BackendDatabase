@@ -19,19 +19,19 @@ r.get("/show-one/:id", controller.findById);
 
 r.post(
   "/create",
-  auth(['ADMIN']),
+  auth(),
   validatorMiddleware({ body: validator.create }),
   controller.create
   );
   
   r.put(
     "/update/:id",
-    auth(['ADMIN']),
+    auth(),
     validatorMiddleware({ body: validator.update }),
     controller.update
     );
     
-r.delete("/delete/:id", auth(['ADMIN']), controller.delete);
+r.delete("/delete/:id", auth(), controller.delete);
 
 const projectsRouter = r;
 export default projectsRouter;
