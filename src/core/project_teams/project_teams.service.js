@@ -12,6 +12,40 @@ class ProjectTeamsService extends BaseService {
     await this.projectsService.recalcAndUpdateContractValue(project_id);
   }
 
+  findAll = async (query) => {
+  const q = this.transformBrowseQuery(query);
+
+  q.where = {
+    ...q.where,
+  };
+
+  const data = await this.db.project_teams.findMany(q);
+
+  if (query.paginate) {
+    const countData = await this.db.project_teams.count({ where: q.where });
+    return this.paginate(data, countData, q);
+  }
+
+  return data;
+};
+
+findById = async (id) => {
+  const project_teams_Id = Number(id);
+
+  return await this.db.project_teams.findFirst({
+    where: {
+      id: project_teams_Id,
+    },
+    include: {
+          project_team_members: {
+            include: {
+              role_levels: true
+            }
+          }
+        }
+    });
+  };
+
   create = async (payload) => {
     const team = await this.db.project_teams.create({ data: payload });
 
@@ -21,19 +55,33 @@ class ProjectTeamsService extends BaseService {
   };
 
   update = async (id, payload) => {
+
+    const filteredPayload = Object.fromEntries(
+    Object.entries(payload).filter(([_, value]) => {
+      if (value === undefined) return false;
+      if (value === null) return false;
+      if (typeof value === "string" && value.trim() === "") return false;
+      return true;
+    })
+  );
+
+    const project_teams_Id = Number(id);
     const updated = await this.db.project_teams.update({
-      where: { id },
-      data: payload
+      where: { id: project_teams_Id },
+      data: filteredPayload
     });
 
-    if (updated.project_id) await this.recalc(updated.project_id);
+    if (updated.project_teams_Id) await this.recalc(updated.project_id);
 
     return updated;
   };
 
   delete = async (id) => {
-    const team = await this.db.project_teams.findUnique({ where: { id } });
-    const deleted = await this.db.project_teams.delete({ where: { id } });
+    const team = await this.db.project_teams.findUnique({ where: { id: Number(id) } });
+      if (!team) {
+        throw new Error("project_teams tidak ditemukan");
+      } 
+    const deleted = await this.db.project_teams.delete({ where: { id: Number(id) } });
 
     if (team?.project_id) await this.recalc(team.project_id);
 

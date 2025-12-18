@@ -31,7 +31,7 @@ r.post(
     controller.update
     );
     
-r.delete("/delete/:id", auth(['ADMIN']), controller.delete);
+r.delete("/delete/:id", auth(), controller.delete);
 
 const projectsRouter = r;
 export default projectsRouter;
