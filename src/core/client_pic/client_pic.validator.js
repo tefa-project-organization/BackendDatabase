@@ -14,7 +14,14 @@ create: Joi.object({
 ,
 
   update: Joi.object({
-    // no-data
+  id: Joi.forbidden().optional(), // ⬅️ kunci masalah
+
+  name: Joi.string().max(255).optional(),
+  email: Joi.string().email().max(255).optional,
+  phone: Joi.string().max(50).optional(),
+  title: Joi.string().max(100).optional(),
+  client_id: Joi.number().optional(),
+  project_id: Joi.number().optional(),
   }),
 };
 
