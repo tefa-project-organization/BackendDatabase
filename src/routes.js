@@ -22,9 +22,6 @@ export const routeLists = [
         route: employeesRouter
     },
     {
-        path : '/employees',
-    }
-    {
         path : '/projects',
         route: projectssRouter
     },
