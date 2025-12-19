@@ -14,9 +14,9 @@ class employeesService extends BaseService {
       const countData = await this.db.employees.count({ where: q.where });
       return this.paginate(data, countData, q);
     }
-    return data;
+     return this.exclude(data, ["password", "refresh_token"]);
   };
-
+  
   findById = async (id) => {
     const data = await this.db.employees.findUnique({ where: { id } });
     return data;
