@@ -9,8 +9,6 @@ import pic_clientsRouter from './core/client_pic/client_pic.router.js';
 import documnent from './core/documents/documents.router.js';
 import path from 'path';
 import dashboard from './core/dashboard/dashboard.router.js';
-import role_levelsRouter from './core/role_levels/role_levels.router.js';
-
 const router = express.Router();
 
 
@@ -24,8 +22,7 @@ export const routeLists = [
         route: employeesRouter
     },
     {
-        path : '/role_levels',
-        route: role_levelsRouter
+        path : '/employees',
     }
     {
         path : '/projects',
