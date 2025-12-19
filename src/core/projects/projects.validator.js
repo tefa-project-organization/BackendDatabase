@@ -7,7 +7,7 @@ export const projectsValidator = {
     project_code: Joi.string().max(50).required(),
     project_type: Joi.string().max(50).required(),
     client_id : Joi.number().required(),
-    contract_value : Joi.number().optional(),
+    contract_value : Joi.number().optional().allow(null, ''),
     started_at : Joi.date().required(),
     finished_at : Joi.date().optional()
   }),
