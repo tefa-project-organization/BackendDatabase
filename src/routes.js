@@ -1,7 +1,7 @@
 import express from 'express';
 import authenticationRouter from './core/authentication/authentication.router.js';
 import projectssRouter from './core/projects/projects.router.js';
-import usersRouter from './core/users/users.router.js';
+import employeesRouter from './core/employees/employees.router.js';
 import clientsRouter from './core/clients/clients.router.js';
 import team_members from './core/project_team_members/project_team_members.router.js';
 import project_teamsRouter from './core/project_teams/project_teams.router.js';
@@ -18,8 +18,8 @@ export const routeLists = [
         route: authenticationRouter
     },
     {
-        path : '/users',
-        route: usersRouter
+        path : '/employees',
+        route: employeesRouter
     },
     {
         path : '/projects',
