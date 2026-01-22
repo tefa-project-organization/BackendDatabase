@@ -108,9 +108,11 @@ class ProjectsService extends BaseService {
 };
 
 
-  delete = async (id) => {
-    return await this.db.projects.delete({ where: { id } });
-  };
+delete = async (id) => {
+  return await this.db.projects.update({
+    where: { id },
+    data: { is_deleted: true }
+  })}
 }
 
 export default ProjectsService;
