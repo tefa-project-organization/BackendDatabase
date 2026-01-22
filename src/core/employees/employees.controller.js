@@ -1,41 +1,41 @@
 import BaseController from "../../base/controller.base.js";
 import { NotFound } from "../../exceptions/catch.execption.js";
-import project_teamsService from "./project_teams.service.js";
+import employeesService from "./employees.service.js";
 
-class project_teamsController extends BaseController {
+class employeesController extends BaseController {
   #service;
 
   constructor() {
     super();
-    this.#service = new project_teamsService();
+    this.#service = new employeesService();
   }
 
   findAll = this.wrapper(async (req, res) => {
     const data = await this.#service.findAll(req.query);
-    return this.ok(res, data, "project_teamss successfully retrieved");
+    return this.ok(res, data, "employeess successfully retrieved");
   });
 
   findById = this.wrapper(async (req, res) => {
     const data = await this.#service.findById(req.params.id);
-    if (!data) throw new NotFound("project_teams not found");
+    if (!data) throw new NotFound("employees not found");
 
-    return this.ok(res, data, "project_teams successfully retrieved");
+    return this.ok(res, data, "employees successfully retrieved");
   });
 
   create = this.wrapper(async (req, res) => {
     const data = await this.#service.create(req.body);
-    return this.created(res, data, "project_teams successfully created");
+    return this.created(res, data, "employees successfully created");
   });
 
   update = this.wrapper(async (req, res) => {
     const data = await this.#service.update(req.params.id, req.body);
-    return this.ok(res, data, "project_teams successfully updated");
+    return this.ok(res, data, "employees successfully updated");
   });
 
   delete = this.wrapper(async (req, res) => {
     const data = await this.#service.delete(req.params.id);
-    return this.ok(res, data, "project_teams successfully deleted");
+    return this.noContent(res, "employees successfully deleted");
   });
-}   
+}
 
-export default project_teamsController;
+export default employeesController;

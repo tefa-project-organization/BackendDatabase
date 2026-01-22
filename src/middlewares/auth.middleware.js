@@ -9,7 +9,7 @@ export default function auth(roles) {
   return async (req, res, next) => {
     try {
       const encryptedToken = req.cookies?.cookies_access_token;
-      console.log("Encrypted Cookie:", encryptedToken);
+      // console.log("Encrypted Cookie:", encryptedToken);
 
       if (!encryptedToken) {
         return next(new ApiError(401, 'NO_AUTHORIZATION', 'Please Login First'));
@@ -19,9 +19,9 @@ export default function auth(roles) {
       let token;
       try {
         token = decrypt(encryptedToken);
-        console.log("Decrypted Token:", token);
+        // console.log("Decrypted Token:", token);
       } catch (err) {
-        console.error("Decrypt error:", err);
+        // console.error("Decrypt error:", err);
         return next(new Unauthenticated("Invalid encrypted token"));
       }
 
@@ -29,9 +29,9 @@ export default function auth(roles) {
       let decoded;
       try {
         decoded = verifyToken(token);
-        console.log("Decoded JWT:", decoded);
+        // console.log("Decoded JWT:", decoded);
       } catch (err) {
-        console.error("JWT Verify Error:", err);
+        // console.error("JWT Verify Error:", err);
         return next(new Unauthenticated("Invalid or expired token"));
       }
 
@@ -50,26 +50,10 @@ export default function auth(roles) {
       }
 
       // 4. BAN CHECK
-      if (employees.status === false) {
-        if (employees.duration && employees.duration > new Date()) {
+      if (employees.status === "resigned") {
           return next(
-            new Unauthenticated("Your account is banned until " + employees.duration)
+            new Unauthenticated("Your account is banned until ")
           );
-        }
-      }
-
-      // 5. AUTO UNBAN
-      if (
-        employees.status === false &&
-        employees.duration &&
-        employees.duration <= new Date()
-      ) {
-        await prisma.employees.update({
-          where: { id: employees.id },
-          data: { status: true, duration: null },
-        });
-
-        employees.status = true;
       }
 
       // save ke req

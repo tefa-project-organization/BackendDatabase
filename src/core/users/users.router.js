@@ -4,7 +4,6 @@ import usersController from "./users.controller.js";
 import usersValidator from "./users.validator.js";
 import { baseValidator } from "../../base/validator.base.js";
 import auth from "../../middlewares/auth.middleware.js";
-import { upload } from "../../middlewares/upload.middleware.js";
 
 
 const r = Router(),
@@ -36,7 +35,6 @@ r.post(
   r.put(
         "/update-photo", 
          auth(),
-        upload.single("image"), 
         controller.updateProfilePhoto
       );
     

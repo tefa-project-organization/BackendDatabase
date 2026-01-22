@@ -28,12 +28,12 @@ class Client_PICService extends BaseService {
   };
 
   update = async (id, payload) => {
-    const data = await this.db.client_pics.update({ where: { id }, data: payload });
+    const data = await this.db.client_pics.update({  where: { id: Number(id) }, data: payload });
     return data;
   };
 
   delete = async (id) => {
-    const data = await this.db.client_pics.delete({ where: { id } });
+    const data = await this.db.client_pics.delete({ where: { id: Number(id) }});
     return data;
   };
 }

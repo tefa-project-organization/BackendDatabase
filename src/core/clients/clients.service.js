@@ -18,7 +18,7 @@ class clientsService extends BaseService {
   };
 
   findById = async (id) => {
-    const data = await this.db.clients.findUnique({ where: { id } });
+    const data = await this.db.clients.findUnique({ where: { id: Number(id) } });
     return data;
   };
 
@@ -42,13 +42,35 @@ class clientsService extends BaseService {
 
 
   update = async (id, payload) => {
-    const data = await this.db.clients.update({ where: { id }, data: payload });
-    return data;
+
+    const filteredPayload = Object.fromEntries(
+    Object.entries(payload).filter(([_, value]) => {
+      if (value === undefined) return false;
+      if (value === null) return false;
+      if (typeof value === "string" && value.trim() === "") return false;
+      return true;
+    })
+  );
+
+    const clients_Id = Number(id);
+    const updated = await this.db.clients.update({
+      where: { id: clients_Id },
+      data: filteredPayload
+    });
+
+    return updated;
   };
 
   delete = async (id) => {
-    const data = await this.db.clients.delete({ where: { id } });
-    return data;
+    const team = await this.db.clients.findUnique({ where: { id: Number(id) } });
+      if (!team) {
+        throw new Error("Clients tidak ditemukan");
+      } 
+    const deleted = await this.db.clients.delete({ where: { id: Number(id) } });
+
+    if (team?.project_id) await this.recalc(team.project_id);
+
+    return deleted;
   };
 }
 

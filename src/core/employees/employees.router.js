@@ -1,13 +1,13 @@
 import { Router } from "express";
 import validatorMiddleware from "../../middlewares/validator.middleware.js";
-import projectsController from "./projects.controller.js";
-import projectsValidator from "./projects.validator.js";
+import employeesController from "./employees.controller.js";
+import employeesValidator from "./employees.validator.js";
 import { baseValidator } from "../../base/validator.base.js";
 import auth from "../../middlewares/auth.middleware.js";
 
 const r = Router(),
-  validator = projectsValidator,
-  controller = new projectsController();
+  validator = employeesValidator,
+  controller = new employeesController();
 
 r.get(
   "/show-all",
@@ -19,19 +19,19 @@ r.get("/show-one/:id", controller.findById);
 
 r.post(
   "/create",
-  auth(),
+  auth(['ADMIN']),
   validatorMiddleware({ body: validator.create }),
   controller.create
   );
   
   r.put(
     "/update/:id",
-    auth(),
+    auth(['ADMIN']),
     validatorMiddleware({ body: validator.update }),
     controller.update
     );
     
-r.delete("/delete/:id", auth(), controller.delete);
+r.delete("/delete/:id", auth(['ADMIN']), controller.delete);
 
-const projectsRouter = r;
-export default projectsRouter;
+const employeesRouter = r;
+export default employeesRouter;

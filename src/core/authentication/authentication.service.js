@@ -1,3 +1,4 @@
+  import 'dotenv/config';
   import BaseService from '../../base/service.base.js';
   import { Forbidden, NotFound, BadRequest } from '../../exceptions/catch.execption.js';
   import { compare, hash } from '../../helpers/bcrypt.helper.js';
@@ -120,18 +121,20 @@ resetPassword = async (token, newPassword) => {
 
   if (!employees) throw new NotFound("Account not found");
 
+  // 🔴 STATUS CHECK (PENTING)
+  if (employees.status === "resigned") {
+    throw new Forbidden("Your account has been resigned and cannot login");
+  }
+
   const pwValid = await compare(password, employees.password);
   if (!pwValid) throw new BadRequest("Password is incorrect");
 
-  // =====================================================
-
-  // Jika lolos ban check, generate token
   const access_token = await generateAccessToken(employees);
   const refresh_token = await generateRefreshToken(employees);
 
   await this.db.employees.update({
     where: { id: employees.id },
-    data: { refresh_token }, 
+    data: { refresh_token },
   });
 
   return {
@@ -139,6 +142,7 @@ resetPassword = async (token, newPassword) => {
     token: { access_token, refresh_token },
   };
 };
+
 
 
 
