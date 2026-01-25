@@ -29,7 +29,7 @@ app.use(cookieParser());
 ========================== */
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://frontend-anda.vercel.app", // GANTI sesuai frontend prod
+  "https://aplikasi-database-project-fe.vercel.app", // GANTI sesuai frontend prod
 ];
 
 const corsOptions = {
