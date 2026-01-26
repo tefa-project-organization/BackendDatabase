@@ -29,6 +29,7 @@ app.use(cookieParser());
 ========================== */
 const allowedOrigins = [
   "http://localhost:5173",
+  "http://localhost:5174",
   "https://frontend-anda.vercel.app", // GANTI sesuai frontend prod
 ];
 
