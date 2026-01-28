@@ -183,7 +183,7 @@ resetPassword = async (token, newPassword) => {
 
 
 register = async (payload) => {
-  const { name, email, password, nik, nip, phone, address, position, status } = payload || {};
+  const { name, email, password, nik, nip, phone, address, position_id, department_id, status_id } = payload || {};
 
   // VALIDASI INPUT
   if (!email) throw new BadRequest("Email is required");
