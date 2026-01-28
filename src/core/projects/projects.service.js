@@ -166,12 +166,8 @@ class ProjectsService extends BaseService {
     throw new Error("project_id harus berupa angka");
   }
 
-  return await this.db.projects.update({
+  return await this.db.projects.delete({
     where: { id: projectId },
-    data: {
-      is_deleted: true,
-      deleted_at: new Date()
-    }
   });
 };
 
