@@ -183,7 +183,7 @@ resetPassword = async (token, newPassword) => {
 
 
 register = async (payload) => {
-  const { name, email, password, nik, nip, phone, address, position, status } = payload || {};
+  const { name, email, password, nik, nip, phone, address, position_id, department_id, status_id } = payload || {};
 
   // VALIDASI INPUT
   if (!email) throw new BadRequest("Email is required");
@@ -203,8 +203,9 @@ register = async (payload) => {
       email,
       phone,
       address,
-      position,
-      status,
+      position_id,
+      department_id,
+      status_id,
       password: await hash(password, 10),
     },
   });
@@ -218,8 +219,9 @@ register = async (payload) => {
     email: employees.email,
     phone: employees.phone,
     address: employees.address,
-    position: employees.position,
-    status: employees.status,
+    position_id: employees.position_id,
+    department_id: employees.department_id,
+    status_id: employees.status_id,
     created_at: employees.created_at,
     
   };
