@@ -15,6 +15,11 @@ class projectsController extends BaseController {
     return this.ok(res, data, "projectss successfully retrieved");
   });
 
+  findAllDeleted = this.wrapper(async (req, res) => {
+    const data = await this.#service.findAllDeleted(req.query);
+    return this.ok(res, data, "projectss successfully retrieved");
+  });
+
   findById = this.wrapper(async (req, res) => {
     const data = await this.#service.findById(req.params.id);
     if (!data) throw new NotFound("projects not found");
