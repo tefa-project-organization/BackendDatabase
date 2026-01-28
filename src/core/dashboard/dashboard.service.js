@@ -34,7 +34,7 @@ class DashboardService extends BaseService {
       // Total employee (exclude resigned)
       this.db.employees.count({
         where: {
-          status: { not: "resigned" }
+          status_id: { not: "resigned" }
         }
       }),
 
