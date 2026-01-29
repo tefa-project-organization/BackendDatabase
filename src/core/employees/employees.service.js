@@ -6,17 +6,56 @@ class employeesService extends BaseService {
     super(prisma);
   }
 
-  findAll = async (query) => {
-    const q = this.transformBrowseQuery(query);
-    const data = await this.db.employees.findMany({ ...q });
+findAll = async (query) => {
+  const q = this.transformBrowseQuery(query);
 
-    if (query.paginate) {
-      const countData = await this.db.employees.count({ where: q.where });
-      return this.paginate(data, countData, q);
-    }
-     return this.exclude(data, ["password", "refresh_token"]);
+  const data = await this.db.employees.findMany({
+    ...q,
+    select: {
+      id: true,
+      nik: true,
+      nip: true,
+      name: true,
+      email: true,
+      phone: true,
+      address: true,
+
+      position: {
+        select: {
+          id: true,
+          position_name: true,
+        },
+      },
+
+      status: {
+        select: {
+          id: true,
+          status_name: true,
+        },
+      },
+
+      department: {
+        select: {
+          id: true,
+          department_name: true,
+        },
+      },
+    },
+  });
+
+  const totalItems = await this.db.employees.count({ where: q.where });
+
+  return {
+    employees: data,
+    meta: {
+      total_items: totalItems,
+      total_pages: Math.ceil(totalItems / q.take),
+      current_page: q.page,
+      limit: q.take,
+    },
   };
-  
+};
+
   findById = async (id) => {
     const data = await this.db.employees.findUnique({ where: { id } });
     return data;
