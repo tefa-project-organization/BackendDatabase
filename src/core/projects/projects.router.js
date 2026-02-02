@@ -30,11 +30,7 @@ r.post(
   controller.create
   );
 
-r.get(
-  "/show-all-deleted",
-  validatorMiddleware({ query: baseValidator.browseQuery }),
-  controller.findAlldeleted
-);
+
   
   r.put(
     "/update/:id",
