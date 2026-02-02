@@ -119,8 +119,6 @@ findAllDeleted = async (query) => {
   });
 };
 
-
-
   create = async (payload) => {
     const projectCode = await this.generateProjectCode();
 
@@ -168,8 +166,6 @@ findAllDeleted = async (query) => {
 
   return this.recalcAndUpdateContractValue(id);
 };
-
-
 
   delete = async (id) => {
   const projectId = Number(id);

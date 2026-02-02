@@ -21,16 +21,16 @@ import status from 'http-status';
     return res.status(404).json({ message: "User not found" });
   }
 
-  return this.ok(res, { user });
-});
+    return this.ok(res, { user });
+  });
 
 
   login = this.wrapper(async (req, res) => {
-  const data = await this.#service.login(req.body);
+    const data = await this.#service.login(req.body);
 
-  // encrypt token (kamu sudah pakai helper encrypt)
-  const accessEnc = encrypt(data.token.access_token);
-  const refreshEnc = encrypt(data.token.refresh_token);
+    // encrypt token (kamu sudah pakai helper encrypt)
+    const accessEnc = encrypt(data.token.access_token);
+    const refreshEnc = encrypt(data.token.refresh_token);
 
   // set cookies (sesuaikan flags)
   res.cookie("cookies_access_token", accessEnc, {
@@ -57,44 +57,43 @@ import status from 'http-status';
 
 });
 
-refresh = this.wrapper(async (req, res) => {
-  const encryptedRefresh = req.cookies.cookies_refresh_token;
+  refresh = this.wrapper(async (req, res) => {
+    const encryptedRefresh = req.cookies.cookies_refresh_token;
 
-  if (!encryptedRefresh) {
-    return res.status(401).json({ message: "No refresh token provided" });
-  }
+    if (!encryptedRefresh) {
+      return res.status(401).json({ message: "No refresh token provided" });
+    }
 
-  const refreshToken = decrypt(encryptedRefresh);
+    const refreshToken = decrypt(encryptedRefresh);
 
-  const data = await this.#service.refreshToken(refreshToken);
+    const data = await this.#service.refreshToken(refreshToken);
 
-  const newAccessEnc = encrypt(data.token.access_token);
-  const newRefreshEnc = encrypt(data.token.refresh_token);
+    const newAccessEnc = encrypt(data.token.access_token);
+    const newRefreshEnc = encrypt(data.token.refresh_token);
 
-  // 🔥 Set cookie dengan refresh token baru
-  res.cookie("cookies_access_token", newAccessEnc, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    maxAge: 1000 * 60 * 15,  
+    // 🔥 Set cookie dengan refresh token baru
+    res.cookie("cookies_access_token", newAccessEnc, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: 1000 * 60 * 15,  
+    });
+
+    res.cookie("cookies_refresh_token", newRefreshEnc, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+    });
+
+    if (data.user.refresh_token) {
+      delete data.user.refresh_token; 
+    }
+
+    return this.ok(res, {
+      user: data.user,
+    }, "Token refreshed successfully");
   });
-
-  res.cookie("cookies_refresh_token", newRefreshEnc, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    maxAge: 1000 * 60 * 60 * 24 * 7,
-  });
-
-  if (data.user.refresh_token) {
-    delete data.user.refresh_token; 
-  }
-
-  return this.ok(res, {
-    user: data.user,
-  }, "Token refreshed successfully");
-
-});
 
 
     register = this.wrapper(async (req, res) => {
@@ -121,26 +120,26 @@ refresh = this.wrapper(async (req, res) => {
 
 
     logout = this.wrapper(async (req, res) => {
-  // jika kamu punya user id di req.user (dari middleware auth), revoke di DB
-  if (req.user && req.user.id) {
-    await this.#service.revokeRefreshToken(req.user.id);
-  }
+    // jika kamu punya user id di req.user (dari middleware auth), revoke di DB
+    if (req.user && req.user.id) {
+      await this.#service.revokeRefreshToken(req.user.id);
+    }
 
-  res.clearCookie("cookies_access_token", {
-  httpOnly: true,
-  secure: true,
-  sameSite: "none",
-});
+    res.clearCookie("cookies_access_token", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+  });
 
-res.clearCookie("cookies_refresh_token", {
-  httpOnly: true,
-  secure: true,
-  sameSite: "none",
-});
+  res.clearCookie("cookies_refresh_token", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+  });
 
 
-  return res.json({ message: "Logged out" });
-});
-  }
+    return res.json({ message: "Logged out" });
+  });
+    }
 
-  export default AuthenticationController;
+export default AuthenticationController;

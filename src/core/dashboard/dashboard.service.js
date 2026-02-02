@@ -38,7 +38,7 @@ class DashboardService extends BaseService {
         }
       }),
 
-      // 🔥 PROJECT SEDANG BERJALAN
+      //  PROJECT SEDANG BERJALAN
       this.db.projects.count({
         where: {
           is_deleted: false,

@@ -22,27 +22,25 @@ class clientsService extends BaseService {
     return data;
   };
 
- create = async (payload) => {
-  console.log("PAYLOAD MASUK:", payload);
+  create = async (payload) => {
+    console.log("PAYLOAD MASUK:", payload);
 
-  // Sanitasi field terlarang
-  const {
-    id,              // Hapus id agar tidak mengganggu autoincrement
-    created_at,
-    updated_at,
-    ...clean         // Sisanya aman
-  } = payload;
+    // Sanitasi field terlarang
+    const {
+      id,              // Hapus id agar tidak mengganggu autoincrement
+      created_at,
+      updated_at,
+      ...clean         // Sisanya aman
+    } = payload;
 
-  const clients = await this.db.clients.create({
-    data: clean,
-  });
+    const clients = await this.db.clients.create({
+      data: clean,
+    });
 
-  return { data: clients };
-};
-
+    return { data: clients };
+  };
 
   update = async (id, payload) => {
-
     const filteredPayload = Object.fromEntries(
     Object.entries(payload).filter(([_, value]) => {
       if (value === undefined) return false;
