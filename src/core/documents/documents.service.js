@@ -106,35 +106,36 @@ class documentsService extends BaseService {
   };
 
 create = async (payload, documentFile) => {
-  return await this.db.$transaction(async (tx) => {
-    const document = await tx.documents.create({
-      data: {
-        number: payload.number,
-        date_created: new Date(),
-        date_signed: payload.date_signed,
-        project_id: payload.project_id,
-        client_id: payload.client_id,
-        client_pic_id: payload.client_pic_id,
-        document_types: payload.document_types_id
-          ? { connect: { id: payload.document_types_id } }
-          : undefined,
-      },
+  // 1. Create DB record dulu (tanpa transaction)
+  const document = await this.db.documents.create({
+    data: {
+      number: payload.number,
+      date_signed: payload.date_signed,
+      project_id: payload.project_id,
+      client_id: payload.client_id,
+      client_pic_id: payload.client_pic_id,
+      document_types: payload.document_types_id
+        ? { connect: { id: payload.document_types_id } }
+        : undefined,
+    },
     });
 
-    if (documentFile) {
-      const documentUrl = await this.uploadDocument(documentFile, document.id);
+  // 2. Upload file (di luar transaction)
+  if (documentFile) {
+    const url = await this.uploadDocument(documentFile, document.id);
 
-      await tx.documents.update({
-        where: { id: document.id },
-        data: { document_url: documentUrl },
-      });
+    // 3. Update URL
+    await this.db.documents.update({
+      where: { id: document.id },
+      data: { document_url: url }
+    });
 
-      document.document_url = documentUrl;
-    }
+    document.document_url = url;
+  }
 
-    return document;
-  });
+  return document;
 };
+
 
 
 updateWithFile = async (id, payload, documentFile) => {
@@ -168,13 +169,11 @@ updateWithFile = async (id, payload, documentFile) => {
     // upload file baru
     const newUrl = await this.uploadDocument(documentFile, updated.id);
 
-    // update url di DB
     await tx.documents.update({
       where: { id: updated.id },
       data: { document_url: newUrl },
     });
 
-    // OPTIONAL: hapus file lama (recommended)
     try {
       await this.deleteDocumentFile(existing.document_url);
     } catch (err) {
