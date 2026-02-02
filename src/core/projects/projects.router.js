@@ -15,6 +15,12 @@ r.get(
   controller.findAll
 );
 
+r.get(
+  "/show-all-deleted",
+  validatorMiddleware({ query: baseValidator.browseQuery }),
+  controller.findAllDeleted
+);
+
 r.get("/show-one/:id", controller.findById);
 
 r.post(
