@@ -14,7 +14,6 @@
     controller.me
   );
 
-
   r.post(
     '/login',
     validatorMiddleware({ body: validator.login }),
@@ -33,7 +32,6 @@
     controller.resetPassword
   );
 
-
   r.post(
     '/refresh',
     controller.refresh
@@ -45,7 +43,6 @@
     validatorMiddleware({ body: validator.register }),
     controller.register
   );
-
 
   r.put(
     '/update',

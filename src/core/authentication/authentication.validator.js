@@ -7,16 +7,12 @@ export const authenticationValidator = {
   identifier: Joi.string().required(),
   password: Joi.string().required(),
 }),
-
-
   refresh: Joi.object({
     refresh_token: Joi.string().required().messages({
       "string.empty": "Refresh token must be filled",
       "any.required": "Refresh token is required",
     }),
   }),
-
-  
   create: Joi.object({
     // no-data
   }),

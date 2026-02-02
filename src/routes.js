@@ -10,6 +10,7 @@ import documnent from './core/documents/documents.router.js';
 import logs from './core/logs/logs.router.js';
 import path from 'path';
 import dashboard from './core/dashboard/dashboard.router.js';
+import role_levelsRouter from './core/role_levels/role_levels.router.js';
 const router = express.Router();
 
 
@@ -51,6 +52,9 @@ export const routeLists = [
         route: dashboard
     },
     {
+        path : '/role_levels',
+        route: role_levelsRouter
+    }
         path : '/logs',
         route: logs
     },

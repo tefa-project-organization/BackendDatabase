@@ -23,18 +23,14 @@ class clientsController extends BaseController {
   });
 
   create = this.wrapper(async (req, res) => {
-  console.log("HEADERS:", req.headers);
-console.log("RAW BODY:", req.rawBody);
-console.log("REQ BODY:", req.body);
+    console.log("HEADERS:", req.headers);
+    console.log("RAW BODY:", req.rawBody);
+    console.log("REQ BODY:", req.body);
 
-
-  const employees_id = req.employees?.id;
-  const data = await this.#service.create(req.body, employees_id);
-  return this.created(res, data, "clients successfully created");
-});
-
-
-
+    const employees_id = req.employees?.id;
+    const data = await this.#service.create(req.body, employees_id);
+    return this.created(res, data, "clients successfully created");
+  });
 
   update = this.wrapper(async (req, res) => {
     const data = await this.#service.update(req.params.id, req.body);
