@@ -182,6 +182,21 @@ findAllDeleted = async (query) => {
   });
 };
 
+findalldeleted = async (query) => {
+  const q = this.transformBrowseQuery(query);
+  q.where = {
+    ...q.where,
+    is_deleted: true
+  };
+  const data = await this.db.projects.findMany(q);
+
+  if (query.paginate) {
+    const countData = await this.db.projects.count({ where: q.where });
+    return this.paginate(data, countData, q);
+  }
+  return data;
+};
+
 }
 
 export default ProjectsService;
