@@ -7,6 +7,7 @@ import team_members from './core/project_team_members/project_team_members.route
 import project_teamsRouter from './core/project_teams/project_teams.router.js';
 import pic_clientsRouter from './core/client_pic/client_pic.router.js';
 import documnent from './core/documents/documents.router.js';
+import logs from './core/logs/logs.router.js';
 import path from 'path';
 import dashboard from './core/dashboard/dashboard.router.js';
 const router = express.Router();
@@ -48,7 +49,11 @@ export const routeLists = [
     {
         path : '/dashboard',
         route: dashboard
-    }
+    },
+    {
+        path : '/logs',
+        route: logs
+    },
 ]
 
 routeLists.forEach((route) => {
