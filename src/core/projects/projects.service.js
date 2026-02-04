@@ -173,8 +173,9 @@ findAllDeleted = async (query) => {
     throw new Error("project_id harus berupa angka");
   }
 
-  return await this.db.projects.delete({
+  return await this.db.projects.update({
     where: { id: projectId },
+    data: { is_deleted: true }  
   });
 };
 
