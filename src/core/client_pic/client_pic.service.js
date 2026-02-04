@@ -33,7 +33,7 @@ class Client_PICService extends BaseService {
   };
 
   delete = async (id) => {
-    const data = await this.db.client_pics.delete({ where: { id: Number(id) }});
+    const data = await this.db.client_pics.update({ where: { id: Number(id) }, data: { is_deleted: true }});
     return data;
   };
 }

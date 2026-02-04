@@ -64,7 +64,7 @@ class clientsService extends BaseService {
       if (!team) {
         throw new Error("Clients tidak ditemukan");
       } 
-    const deleted = await this.db.clients.delete({ where: { id: Number(id) } });
+    const deleted = await this.db.clients.update({ where: { id: Number(id) }, data: { is_deleted: true } });
 
     if (team?.project_id) await this.recalc(team.project_id);
 
