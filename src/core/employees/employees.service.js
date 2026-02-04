@@ -72,7 +72,7 @@ findAll = async (query) => {
   };
 
   delete = async (id) => {
-    const data = await this.db.employees.delete({ where: { id } });
+    const data = await this.db.employees.update({ where: { id }, data: { is_deleted: true } });
     return data;
   };
 }

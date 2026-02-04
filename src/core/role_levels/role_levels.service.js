@@ -33,7 +33,7 @@ class role_levelsService extends BaseService {
   };
 
   delete = async (id) => {
-    const data = await this.db.role_levels.delete({ where: { id } });
+    const data = await this.db.role_levels.update({ where: { id }, data: { is_deleted: true }});
     return data;
   };
 }

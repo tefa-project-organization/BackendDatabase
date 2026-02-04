@@ -186,7 +186,7 @@ updateWithFile = async (id, payload, documentFile) => {
 };
 
   delete = async (id) => {
-    const data = await this.db.documents.delete({  where: { id:  Number(id) }});
+    const data = await this.db.documents.update({  where: { id:  Number(id), }, data: { is_deleted: true }});
     return data;
   };
 }
