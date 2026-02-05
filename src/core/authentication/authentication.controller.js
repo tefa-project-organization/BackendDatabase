@@ -37,7 +37,7 @@ import status from 'http-status';
     httpOnly: true,
     secure: true,
     sameSite: "none",
-    maxAge: 1000 * 60 * 15,
+    maxAge: 1000 * 60 * 60 * 2,
   });
 
   res.cookie("cookies_refresh_token", refreshEnc, {
