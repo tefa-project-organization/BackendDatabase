@@ -8,6 +8,10 @@ class clientsService extends BaseService {
 
   findAll = async (query) => {
     const q = this.transformBrowseQuery(query);
+    q.where = {
+    ...q.where,
+    is_deleted: false
+  };
     const data = await this.db.clients.findMany({ ...q });
 
     if (query.paginate) {
@@ -22,27 +26,25 @@ class clientsService extends BaseService {
     return data;
   };
 
- create = async (payload) => {
-  console.log("PAYLOAD MASUK:", payload);
+  create = async (payload) => {
+    console.log("PAYLOAD MASUK:", payload);
 
-  // Sanitasi field terlarang
-  const {
-    id,              // Hapus id agar tidak mengganggu autoincrement
-    created_at,
-    updated_at,
-    ...clean         // Sisanya aman
-  } = payload;
+    // Sanitasi field terlarang
+    const {
+      id,              // Hapus id agar tidak mengganggu autoincrement
+      created_at,
+      updated_at,
+      ...clean         // Sisanya aman
+    } = payload;
 
-  const clients = await this.db.clients.create({
-    data: clean,
-  });
+    const clients = await this.db.clients.create({
+      data: clean,
+    });
 
-  return { data: clients };
-};
-
+    return { data: clients };
+  };
 
   update = async (id, payload) => {
-
     const filteredPayload = Object.fromEntries(
     Object.entries(payload).filter(([_, value]) => {
       if (value === undefined) return false;
@@ -66,7 +68,7 @@ class clientsService extends BaseService {
       if (!team) {
         throw new Error("Clients tidak ditemukan");
       } 
-    const deleted = await this.db.clients.delete({ where: { id: Number(id) } });
+    const deleted = await this.db.clients.update({ where: { id: Number(id) }, data: { is_deleted: true } });
 
     if (team?.project_id) await this.recalc(team.project_id);
 

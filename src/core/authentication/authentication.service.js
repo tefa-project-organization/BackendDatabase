@@ -143,10 +143,6 @@ resetPassword = async (token, newPassword) => {
   };
 };
 
-
-
-
-
     refreshToken = async (incomingRefreshToken) => {
   if (!incomingRefreshToken) {
     throw new BadRequest("Refresh token missing");
@@ -179,8 +175,6 @@ resetPassword = async (token, newPassword) => {
     token: { access_token, refresh_token: new_refresh_token },
   };
 };
-
-
 
 register = async (payload) => {
   const { name, email, password, nik, nip, phone, address, position_id, department_id, status_id } = payload || {};

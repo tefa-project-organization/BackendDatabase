@@ -13,14 +13,10 @@ const supabase = createClient(
   }
 );
 
-
-
 class documentsService extends BaseService {
   constructor() {
     super(prisma);
   }
-
-
 
   async uploadDocument(file, documentId) {
   if (!file) return null;
@@ -97,12 +93,12 @@ async generateDocumentNumber() {
   return `DOC-${String(next).padStart(3, "0")}`;
 }
 
-async deleteDocumentFile(publicUrl) {
-  if (!publicUrl) return;
+  async deleteDocumentFile(publicUrl) {
+    if (!publicUrl) return;
 
-  const bucket = "document_file";
-  const path = publicUrl.split(`${bucket}/`)[1];
-  if (!path) return;
+    const bucket = "document_file";
+    const path = publicUrl.split(`${bucket}/`)[1];
+    if (!path) return;
 
   await supabase.storage.from(bucket).remove([path]);
 }
@@ -209,7 +205,6 @@ updateWithFile = async (id, payload, documentFile) => {
     return updated;
   });
 };
-
 
 delete = async (id) => {
   const document = await this.db.documents.findUnique({

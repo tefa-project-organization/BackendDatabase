@@ -1,7 +1,7 @@
 import BaseService from "../../base/service.base.js";
 import prisma from '../../config/prisma.db.js';
 
-class Client_PICService extends BaseService {
+class role_levelsService extends BaseService {
   constructor() {
     super(prisma);
   }
@@ -12,34 +12,34 @@ class Client_PICService extends BaseService {
     ...q.where,
     is_deleted: false
   };
-    const data = await this.db.client_pics.findMany({ ...q });
+    const data = await this.db.role_levels.findMany({ ...q });
 
     if (query.paginate) {
-      const countData = await this.db.client_pics.count({ where: q.where });
+      const countData = await this.db.role_levels.count({ where: q.where });
       return this.paginate(data, countData, q);
     }
     return data;
   };
 
   findById = async (id) => {
-    const data = await this.db.client_pics.findUnique({ where: { id: Number(id) } });
+    const data = await this.db.role_levels.findUnique({ where: { id } });
     return data;
   };
 
   create = async (payload) => {
-    const data = await this.db.client_pics.create({ data: payload });
+    const data = await this.db.role_levels.create({ data: payload });
     return data;
   };
 
   update = async (id, payload) => {
-    const data = await this.db.client_pics.update({  where: { id: Number(id) }, data: payload });
+    const data = await this.db.role_levels.update({ where: { id }, data: payload });
     return data;
   };
 
   delete = async (id) => {
-    const data = await this.db.client_pics.update({ where: { id: Number(id) }, data: { is_deleted: true }});
+    const data = await this.db.role_levels.update({ where: { id: Number(id) }, data: { is_deleted: true }});
     return data;
   };
 }
 
-export default Client_PICService;  
+export default role_levelsService;  

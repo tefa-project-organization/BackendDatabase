@@ -119,8 +119,6 @@ findAllDeleted = async (query) => {
   });
 };
 
-
-
   create = async (payload) => {
     const projectCode = await this.generateProjectCode();
 
@@ -169,16 +167,15 @@ findAllDeleted = async (query) => {
   return this.recalcAndUpdateContractValue(id);
 };
 
-
-
   delete = async (id) => {
   const projectId = Number(id);
   if (isNaN(projectId)) {
     throw new Error("project_id harus berupa angka");
   }
 
-  return await this.db.projects.delete({
+  return await this.db.projects.update({
     where: { id: projectId },
+    data: { is_deleted: true }  
   });
 };
 

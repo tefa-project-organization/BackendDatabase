@@ -23,6 +23,7 @@
 
   q.where = {
     ...q.where,
+    is_deleted: false
   };
 
   const data = await this.db.project_team_members.findMany(q);
@@ -142,7 +143,7 @@
       if (!existing) {
         throw new Error("project_team_members tidak ditemukan");
       }
-      const deleted = await this.db.project_team_members.delete({ where: { id: Number(id) } });
+      const deleted = await this.db.project_team_members.update({ where: { id: Number(id) }, data: { is_deleted: true } });
 
       await this.recalc(existing.project_teams_id);
       return deleted;
