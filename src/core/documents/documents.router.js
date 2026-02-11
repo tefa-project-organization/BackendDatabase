@@ -29,12 +29,14 @@ r.post(
   controller.create
 );
   
-r.put(
+ r.put(
   "/update/:id",
   auth(['ADMIN']),
+  upload.single("document"),
   validatorMiddleware({ body: validator.update }),
   controller.update
 );
+
     
 r.delete("/delete/:id", auth(['ADMIN']), controller.delete);
 
