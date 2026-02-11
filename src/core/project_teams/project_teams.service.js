@@ -17,6 +17,7 @@ class ProjectTeamsService extends BaseService {
 
   q.where = {
     ...q.where,
+    is_deleted: false
   };
 
   const data = await this.db.project_teams.findMany(q);
