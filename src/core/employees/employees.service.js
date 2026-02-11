@@ -8,6 +8,10 @@ class employeesService extends BaseService {
 
 findAll = async (query) => {
   const q = this.transformBrowseQuery(query);
+  q.where = {
+    ...q.where,
+    is_deleted: false
+  };
 
   const data = await this.db.employees.findMany({
     ...q,

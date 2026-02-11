@@ -91,6 +91,10 @@ class documentsService extends BaseService {
 
   findAll = async (query) => {
     const q = this.transformBrowseQuery(query);
+    q.where = {
+    ...q.where,
+    is_deleted: false
+  };
     const data = await this.db.documents.findMany({ ...q });
 
     if (query.paginate) {

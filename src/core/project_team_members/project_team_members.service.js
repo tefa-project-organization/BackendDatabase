@@ -23,6 +23,7 @@
 
   q.where = {
     ...q.where,
+    is_deleted: false
   };
 
   const data = await this.db.project_team_members.findMany(q);

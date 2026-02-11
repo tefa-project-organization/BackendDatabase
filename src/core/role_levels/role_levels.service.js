@@ -8,6 +8,10 @@ class role_levelsService extends BaseService {
 
   findAll = async (query) => {
     const q = this.transformBrowseQuery(query);
+    q.where = {
+    ...q.where,
+    is_deleted: false
+  };
     const data = await this.db.role_levels.findMany({ ...q });
 
     if (query.paginate) {
