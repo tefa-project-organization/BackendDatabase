@@ -82,6 +82,21 @@ class documentsService extends BaseService {
   return publicData.publicUrl;
 }
 
+async generateDocumentNumber() {
+  const last = await this.db.documents.findFirst({
+    where: { is_deleted: false },
+    orderBy: { id: "desc" },
+    select: { number: true },
+  });
+
+  if (!last || !last.number) return "DOC-001";
+
+  const match = last.number.match(/DOC-(\d+)/);
+  const next = match ? Number(match[1]) + 1 : 1;
+
+  return `DOC-${String(next).padStart(3, "0")}`;
+}
+
 async deleteDocumentFile(publicUrl) {
   if (!publicUrl) return;
 
@@ -92,17 +107,24 @@ async deleteDocumentFile(publicUrl) {
   await supabase.storage.from(bucket).remove([path]);
 }
 
+findAll = async (query) => {
+  const q = this.transformBrowseQuery(query);
 
-  findAll = async (query) => {
-    const q = this.transformBrowseQuery(query);
-    const data = await this.db.documents.findMany({ ...q });
-
-    if (query.paginate) {
-      const countData = await this.db.documents.count({ where: q.where });
-      return this.paginate(data, countData, q);
-    }
-    return data;
+  q.where = {
+    ...q.where,
+    is_deleted: false,
   };
+
+  const data = await this.db.documents.findMany(q);
+
+  if (query.paginate) {
+    const countData = await this.db.documents.count({ where: q.where });
+    return this.paginate(data, countData, q);
+  }
+
+  return data;
+};
+
 
   findById = async (id) => {
     const data = await this.db.documents.findUnique({ where: { id: Number(id) } });
@@ -110,10 +132,11 @@ async deleteDocumentFile(publicUrl) {
   };
 
 create = async (payload, documentFile) => {
-  // 1. Create DB record dulu (tanpa transaction)
+  const number = await this.generateDocumentNumber();
+
   const document = await this.db.documents.create({
     data: {
-      number: payload.number,
+      number,
       date_signed: payload.date_signed,
       project_id: payload.project_id,
       client_id: payload.client_id,
@@ -122,16 +145,14 @@ create = async (payload, documentFile) => {
         ? { connect: { id: payload.document_types_id } }
         : undefined,
     },
-    });
+  });
 
-  // 2. Upload file (di luar transaction)
   if (documentFile) {
     const url = await this.uploadDocument(documentFile, document.id);
 
-    // 3. Update URL
     await this.db.documents.update({
       where: { id: document.id },
-      data: { document_url: url }
+      data: { document_url: url },
     });
 
     document.document_url = url;
@@ -190,10 +211,30 @@ updateWithFile = async (id, payload, documentFile) => {
 };
 
 
-  delete = async (id) => {
-    const data = await this.db.documents.delete({  where: { id:  Number(id) }});
-    return data;
-  };
+delete = async (id) => {
+  const document = await this.db.documents.findUnique({
+    where: { id: Number(id) },
+  });
+
+  if (!document) throw new Error("Document not found");
+
+  // hapus file di Supabase
+  try {
+    await this.deleteDocumentFile(document.document_url);
+  } catch (err) {
+    console.warn("Supabase delete failed:", err.message);
+  }
+
+  // soft delete
+  return await this.db.documents.update({
+    where: { id: Number(id) },
+    data: {
+      is_deleted: true,
+      document_url: null,
+    },
+  });
+};
+
 }
 
 export default documentsService;  

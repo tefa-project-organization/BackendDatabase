@@ -86,7 +86,7 @@ findAllDeleted = async (query) => {
     const q = this.transformBrowseQuery(query);
     const data = await this.db.history.findMany({ ...q });
 
-    if (query.paginate) {
+    if (query.paginate) { 
       const countData = await this.db.history.count({ where: q.where });
       return this.paginate(data, countData, q);
     }
