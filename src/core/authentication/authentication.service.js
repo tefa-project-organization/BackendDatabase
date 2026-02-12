@@ -122,9 +122,10 @@ resetPassword = async (token, newPassword) => {
   if (!employees) throw new NotFound("Account not found");
 
   // 🔴 STATUS CHECK (PENTING)
-  if (employees.status === "resigned") {
+  if (employees.isActive === false) {
     throw new Forbidden("Your account has been resigned and cannot login");
   }
+
 
   const pwValid = await compare(password, employees.password);
   if (!pwValid) throw new BadRequest("Password is incorrect");

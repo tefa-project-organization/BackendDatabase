@@ -40,7 +40,7 @@ model documents {
   id             Int             @id @default(autoincrement())
   document_types document_types?
   number         String          @db.VarChar(100)
-  date_created   DateTime?       @db.Date
+  date_created   DateTime?       @default(now()) @db.Date
   date_signed    DateTime?       @db.Date
   document_url   String?
   project_id     Int
@@ -65,6 +65,7 @@ model employees {
   position_id                                       Int?
   department_id                                     Int?
   status_id                                         Int?
+  isActive                                          Boolean?               @default(false)
   is_deleted                                        Boolean?               @default(false)
   department                                        department?            @relation(fields: [department_id], references: [id], onDelete: Cascade, map: "fk_department")
   position                                          position?              @relation(fields: [position_id], references: [id], onDelete: Cascade, map: "fk_position")
@@ -140,18 +141,6 @@ model department {
   employees       employees[]
 }
 
-model history {
-  id             Int            @id @default(autoincrement())
-  client_id      Int?
-  project_name   String?        @db.VarChar(255)
-  project_code   String?        @db.Char(7)
-  project_type   project_types?
-  contract_value Decimal?       @db.Decimal(18, 2)
-  started_at     DateTime?      @default(now()) @db.Timestamp(6)
-  finished_at    DateTime?      @db.Timestamp(6)
-  deleted_at     DateTime?      @default(now()) @db.Timestamp(6)
-}
-
 model position {
   id            Int         @id @default(autoincrement())
   position_name String?     @db.VarChar(20)
@@ -164,6 +153,15 @@ model status {
   status_name String?     @db.VarChar(50)
   is_deleted  Boolean?    @default(false)
   employees   employees[]
+}
+
+model logs {
+  log_id            Int       @id(map: "history_pkey") @default(autoincrement())
+  event_description String?   @db.VarChar(255)
+  action            String?   @db.VarChar(10)
+  new_data_change   Json?
+  old_data_change   Json?
+  log_dates         DateTime? @default(now()) @db.Timestamptz(6)
 }
 
 enum document_types {
