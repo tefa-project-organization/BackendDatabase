@@ -1,32 +1,16 @@
 import Joi from "joi";
 
 export const documentsValidator = {
-create : Joi.object({
-  project_id: Joi.number()
-    .integer()
-    .positive()
+create: Joi.object({
+  project_id: Joi.number().integer().positive().required(),
+  client_id: Joi.number().integer().positive().required(),
+  client_pic_id: Joi.number().integer().positive().required(),
+
+  document_types: Joi.string()
+    .valid("BA", "OP", "BAST")
     .required(),
 
-  client_id: Joi.number()
-    .integer()
-    .positive()
-    .required(),
-
-  client_pic_id: Joi.number()
-    .integer()
-    .positive()
-    .required(),
-
-  document_types_id: Joi.number()
-    .integer()
-    .positive()
-    .optional(),
-
-  date_created: Joi.date()
-    .optional(),
-
-  date_signed: Joi.date()
-    .optional(),
+  date_signed: Joi.date().optional(),
 })
   .required()
   .options({ abortEarly: false, allowUnknown: false }),
@@ -48,7 +32,7 @@ create : Joi.object({
     .positive()
     .optional(),
 
-  document_types_id: Joi.number()
+  document_types: Joi.number()
     .integer()
     .positive()
     .optional(),

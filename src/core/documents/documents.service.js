@@ -136,10 +136,10 @@ create = async (payload, documentFile) => {
       date_signed: payload.date_signed,
       project_id: payload.project_id,
       client_id: payload.client_id,
+      date_created: payload.date_created,
       client_pic_id: payload.client_pic_id,
-      document_types: payload.document_types_id
-        ? { connect: { id: payload.document_types_id } }
-        : undefined,
+      document_types: payload.document_types,
+      // date_created otomatis dari DB
     },
   });
 
@@ -156,6 +156,8 @@ create = async (payload, documentFile) => {
 
   return document;
 };
+
+
 
 
 
