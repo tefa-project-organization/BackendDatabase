@@ -1,5 +1,6 @@
 import BaseService from "../../base/service.base.js";
 import prisma from "../../config/prisma.db.js";
+import clientsService from "../clients/clients.service.js";
 
 
 class ProjectsService extends BaseService {
@@ -74,8 +75,8 @@ class ProjectsService extends BaseService {
 
   // Tambahkan include relasi
   q.include = {
-    client: true,
-    client_pic: true, // pastikan memang ada di schema
+    clients: true,
+    client_pics: true, // pastikan memang ada di schema
   };
 
   const data = await this.db.projects.findMany(q);
@@ -98,8 +99,8 @@ findAllDeleted = async (query) => {
 
   //  Tambahkan include relasi
   q.include = {
-    client: true,
-    client_pic: true, // pastikan memang ada di schema
+    clients: true,
+    client_pics: true, // pastikan memang ada di schema
   };
 
   const data = await this.db.projects.findMany(q);
