@@ -128,21 +128,35 @@ findAll = async (query) => {
   };
 
 create = async (payload, documentFile) => {
-  const number = await this.generateDocumentNumber();
 
+  // 1. Ambil project beserta relasinya
+  const project = await this.db.projects.findUnique({
+    where: { id: payload.project_id },
+    include: {
+      client: true,
+      client_pic: true,
+    },
+  });
+
+  if (!project) {
+    throw new Error("Project tidak ditemukan");
+  }
+
+  // 2. Create document (client & PIC dari project)
   const document = await this.db.documents.create({
     data: {
       number,
       date_signed: payload.date_signed,
       project_id: payload.project_id,
-      client_id: payload.client_id,
-      date_created: payload.date_created,
-      client_pic_id: payload.client_pic_id,
-      document_types: payload.document_types,
-      // date_created otomatis dari DB
+      client_id: project.client_id,
+      client_pic_id: project.client_pic_id,
+      document_types: payload.document_types_id
+        ? { connect: { id: payload.document_types_id } }
+        : undefined,
     },
   });
 
+  // 3. Upload file
   if (documentFile) {
     const url = await this.uploadDocument(documentFile, document.id);
 
