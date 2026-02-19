@@ -110,28 +110,41 @@ class documentsService extends BaseService {
   };
 
 create = async (payload, documentFile) => {
-  // 1. Create DB record dulu (tanpa transaction)
+
+  // 1. Ambil project beserta relasinya
+  const project = await this.db.projects.findUnique({
+    where: { id: payload.project_id },
+    include: {
+      client: true,
+      client_pic: true,
+    },
+  });
+
+  if (!project) {
+    throw new Error("Project tidak ditemukan");
+  }
+
+  // 2. Create document (client & PIC dari project)
   const document = await this.db.documents.create({
     data: {
       number: payload.number,
       date_signed: payload.date_signed,
       project_id: payload.project_id,
-      client_id: payload.client_id,
-      client_pic_id: payload.client_pic_id,
+      client_id: project.client_id,
+      client_pic_id: project.client_pic_id,
       document_types: payload.document_types_id
         ? { connect: { id: payload.document_types_id } }
         : undefined,
     },
-    });
+  });
 
-  // 2. Upload file (di luar transaction)
+  // 3. Upload file
   if (documentFile) {
     const url = await this.uploadDocument(documentFile, document.id);
 
-    // 3. Update URL
     await this.db.documents.update({
       where: { id: document.id },
-      data: { document_url: url }
+      data: { document_url: url },
     });
 
     document.document_url = url;
