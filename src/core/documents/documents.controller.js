@@ -27,10 +27,16 @@ class documentsController extends BaseController {
     return this.created(res, data, "documents successfully created");
   });
 
-  update = this.wrapper(async (req, res) => {
-    const data = await this.#service.updateWithFile(req.params.id, req.body);
-    return this.ok(res, data, "documents successfully updated");
-  });
+ update = this.wrapper(async (req, res) => {
+  const data = await this.#service.updateWithFile(
+    req.params.id,
+    req.body,
+    req.file
+  );
+
+  return this.ok(res, data, "documents successfully updated");
+});
+
 
   delete = this.wrapper(async (req, res) => {
     const data = await this.#service.delete(req.params.id);
