@@ -78,21 +78,6 @@ class documentsService extends BaseService {
   return publicData.publicUrl;
 }
 
-async generateDocumentNumber() {
-  const last = await this.db.documents.findFirst({
-    where: { is_deleted: false },
-    orderBy: { id: "desc" },
-    select: { number: true },
-  });
-
-  if (!last || !last.number) return "DOC-001";
-
-  const match = last.number.match(/DOC-(\d+)/);
-  const next = match ? Number(match[1]) + 1 : 1;
-
-  return `DOC-${String(next).padStart(3, "0")}`;
-}
-
   async deleteDocumentFile(publicUrl) {
     if (!publicUrl) return;
 
@@ -100,27 +85,24 @@ async generateDocumentNumber() {
     const path = publicUrl.split(`${bucket}/`)[1];
     if (!path) return;
 
-  await supabase.storage.from(bucket).remove([path]);
-}
-
-findAll = async (query) => {
-  const q = this.transformBrowseQuery(query);
-
-  q.where = {
-    ...q.where,
-    is_deleted: false,
-  };
-
-  const data = await this.db.documents.findMany(q);
-
-  if (query.paginate) {
-    const countData = await this.db.documents.count({ where: q.where });
-    return this.paginate(data, countData, q);
+    await supabase.storage.from(bucket).remove([path]);
   }
 
-  return data;
-};
 
+  findAll = async (query) => {
+    const q = this.transformBrowseQuery(query);
+    q.where = {
+    ...q.where,
+    is_deleted: false
+  };
+    const data = await this.db.documents.findMany({ ...q });
+
+    if (query.paginate) {
+      const countData = await this.db.documents.count({ where: q.where });
+      return this.paginate(data, countData, q);
+    }
+    return data;
+  };
 
   findById = async (id) => {
     const data = await this.db.documents.findUnique({ where: { id: Number(id) } });
@@ -128,13 +110,10 @@ findAll = async (query) => {
   };
 
 create = async (payload, documentFile) => {
-
-  // 1. Ambil project beserta relasinya
   const project = await this.db.projects.findUnique({
-    where: { id: payload.project_id },
+    where: { id: Number(payload.project_id) },
     include: {
-      client: true,
-      client_pic: true,
+      client_pics: true,
     },
   });
 
@@ -142,29 +121,36 @@ create = async (payload, documentFile) => {
     throw new Error("Project tidak ditemukan");
   }
 
-  // 2. Create document (client & PIC dari project)
   const document = await this.db.documents.create({
     data: {
-      number,
-      date_signed: payload.date_signed,
-      project_id: payload.project_id,
-      client_id: project.client_id,
-      client_pic_id: project.client_pic_id,
-      document_types: payload.document_types_id
-        ? { connect: { id: payload.document_types_id } }
-        : undefined,
+      number: payload.number,
+      document_types: payload.document_types,
+      date_signed: payload.date_signed
+        ? new Date(payload.date_signed)
+        : null,
+
+      projects: {
+        connect: { id: project.id },
+      },
+
+      clients: {
+        connect: { id: project.client_id },
+      },
+
+      ...(project.client_pics && {
+        client_pics: {
+          connect: { id: project.client_pics.id },
+        },
+      }),
     },
   });
 
-  // 3. Upload file
   if (documentFile) {
     const url = await this.uploadDocument(documentFile, document.id);
-
     await this.db.documents.update({
       where: { id: document.id },
       data: { document_url: url },
     });
-
     document.document_url = url;
   }
 
@@ -222,30 +208,10 @@ updateWithFile = async (id, payload, documentFile) => {
   });
 };
 
-delete = async (id) => {
-  const document = await this.db.documents.findUnique({
-    where: { id: Number(id) },
-  });
-
-  if (!document) throw new Error("Document not found");
-
-  // hapus file di Supabase
-  try {
-    await this.deleteDocumentFile(document.document_url);
-  } catch (err) {
-    console.warn("Supabase delete failed:", err.message);
-  }
-
-  // soft delete
-  return await this.db.documents.update({
-    where: { id: Number(id) },
-    data: {
-      is_deleted: true,
-      document_url: null,
-    },
-  });
-};
-
+  delete = async (id) => {
+    const data = await this.db.documents.update({  where: { id:  Number(id), }, data: { is_deleted: true }});
+    return data;
+  };
 }
 
 export default documentsService;  
