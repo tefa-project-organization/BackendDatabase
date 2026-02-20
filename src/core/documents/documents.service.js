@@ -78,6 +78,21 @@ class documentsService extends BaseService {
   return publicData.publicUrl;
 }
 
+async generateDocumentNumber() {
+  const last = await this.db.documents.findFirst({
+    where: { is_deleted: false },
+    orderBy: { id: "desc" },
+    select: { number: true },
+  });
+
+  if (!last || !last.number) return "DOC-001";
+
+  const match = last.number.match(/DOC-(\d+)/);
+  const next = match ? Number(match[1]) + 1 : 1;
+
+  return `DOC-${String(next).padStart(3, "0")}`;
+}
+
   async deleteDocumentFile(publicUrl) {
     if (!publicUrl) return;
 
@@ -120,10 +135,11 @@ create = async (payload, documentFile) => {
   if (!project) {
     throw new Error("Project tidak ditemukan");
   }
+  const number = await this.generateDocumentNumber();
 
   const document = await this.db.documents.create({
     data: {
-      number: payload.number,
+      number,
       document_types: payload.document_types,
       date_signed: payload.date_signed
         ? new Date(payload.date_signed)
