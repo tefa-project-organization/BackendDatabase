@@ -124,17 +124,14 @@ async generateDocumentNumber() {
     return data;
   };
 
-create = async (payload, documentFile) => {
+create = async (payload) => {
   const project = await this.db.projects.findUnique({
     where: { id: Number(payload.project_id) },
-    include: {
-      client_pics: true,
-    },
+    include: { client_pics: true },
   });
 
-  if (!project) {
-    throw new Error("Project tidak ditemukan");
-  }
+  if (!project) throw new Error("Project tidak ditemukan");
+
   const number = await this.generateDocumentNumber();
 
   const document = await this.db.documents.create({
@@ -144,31 +141,16 @@ create = async (payload, documentFile) => {
       date_signed: payload.date_signed
         ? new Date(payload.date_signed)
         : null,
+      document_url: payload.document_url,
 
-      projects: {
-        connect: { id: project.id },
-      },
-
-      clients: {
-        connect: { id: project.client_id },
-      },
+      projects: { connect: { id: project.id } },
+      clients: { connect: { id: project.client_id } },
 
       ...(project.client_pics && {
-        client_pics: {
-          connect: { id: project.client_pics.id },
-        },
+        client_pics: { connect: { id: project.client_pics.id } },
       }),
     },
   });
-
-  if (documentFile) {
-    const url = await this.uploadDocument(documentFile, document.id);
-    await this.db.documents.update({
-      where: { id: document.id },
-      data: { document_url: url },
-    });
-    document.document_url = url;
-  }
 
   return document;
 };

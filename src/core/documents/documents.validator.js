@@ -2,7 +2,6 @@ import Joi from "joi";
 
 export const documentsValidator = {
 create: Joi.object({
-  number: Joi.string().required(),
   project_id: Joi.number().integer().positive().required(),
 
   document_types: Joi.string()
