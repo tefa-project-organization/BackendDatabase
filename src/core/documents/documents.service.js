@@ -134,19 +134,6 @@ create = async (payload) => {
 
   const number = await this.generateDocumentNumber();
 
-  const project = await this.db.projects.findUnique({
-  where: { id: Number(payload.project_id) },
-  include: {
-    client_pics: true,
-  },
-});
-
-if (!project) throw new Error("Project not found");
-
-if (!project.client_pics) {
-  throw new Error("Project does not have client PIC assigned");
-}
-
   const document = await this.db.documents.create({
     data: {
       number,
@@ -167,8 +154,6 @@ if (!project.client_pics) {
 
   return document;
 };
-
-
 
 
 
