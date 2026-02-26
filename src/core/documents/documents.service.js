@@ -130,18 +130,29 @@ findAll = async (query) => {
 create = async (payload, documentFile) => {
   const number = await this.generateDocumentNumber();
 
-  const document = await this.db.documents.create({
-    data: {
-      number,
-      date_signed: payload.date_signed,
-      project_id: payload.project_id,
-      client_id: payload.client_id,
-      date_created: payload.date_created,
-      client_pic_id: payload.client_pic_id,
-      document_types: payload.document_types,
-      // date_created otomatis dari DB
-    },
-  });
+  const project = await this.db.projects.findUnique({
+  where: { id: Number(payload.project_id) },
+  include: {
+    client_pics: true,
+  },
+});
+
+if (!project) throw new Error("Project not found");
+
+if (!project.client_pics) {
+  throw new Error("Project does not have client PIC assigned");
+}
+
+const document = await this.db.documents.create({
+  data: {
+    number,
+    project_id: project.id,
+    client_id: project.client_id,
+    client_pic_id: project.client_pics.id,
+    date_signed: payload.date_signed,
+    document_types: payload.document_types,
+  },
+});
 
   if (documentFile) {
     const url = await this.uploadDocument(documentFile, document.id);
