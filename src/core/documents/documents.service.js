@@ -157,8 +157,6 @@ create = async (payload) => {
 
 
 
-
-
 updateWithFile = async (id, payload, documentFile) => {
   return await this.db.$transaction(async (tx) => {
     const existing = await tx.documents.findUnique({

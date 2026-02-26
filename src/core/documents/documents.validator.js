@@ -15,8 +15,7 @@ create: Joi.object({
     .required(),
     
 })
-  .required()
-  .options({ abortEarly: false, allowUnknown: false }),
+.options({ abortEarly: false, allowUnknown: false }),
 
   update: Joi.object({
 
@@ -35,10 +34,9 @@ create: Joi.object({
     .positive()
     .optional(),
 
-  document_types: Joi.number()
-    .integer()
-    .positive()
-    .optional(),
+document_types: Joi.string()
+    .valid("BA", "OP", "BAST")
+    .required(),
 
   date_created: Joi.date()
     .optional(),
