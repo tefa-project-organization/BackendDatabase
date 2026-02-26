@@ -23,8 +23,6 @@ r.get("/show-one/:id", controller.findById);
 
 r.post(
   "/create",
-  // auth(['ADMIN']),
-  upload.single("document"),                
   validatorMiddleware({ body: validator.create }),
   controller.create
 );

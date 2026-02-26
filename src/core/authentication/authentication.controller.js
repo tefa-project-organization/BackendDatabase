@@ -3,6 +3,7 @@ import BaseController from '../../base/controller.base.js';
   import AuthenticationService from './authentication.service.js';
 import { encrypt, decrypt } from "../../helpers/encryption.helper.js";
 import status from 'http-status';
+import { access } from 'fs';
 
 
   class AuthenticationController extends BaseController {
@@ -52,7 +53,9 @@ import status from 'http-status';
   }
 
   return this.ok(res,{
-    employees: data.employees,
+    user: data.employees,
+    access_token: data.token.access_token,
+    refresh_token: data.token.refresh_token,
   });
 
 });
@@ -71,7 +74,7 @@ import status from 'http-status';
     const newAccessEnc = encrypt(data.token.access_token);
     const newRefreshEnc = encrypt(data.token.refresh_token);
 
-    // 🔥 Set cookie dengan refresh token baru
+    //  Set cookie dengan refresh token baru
     res.cookie("cookies_access_token", newAccessEnc, {
       httpOnly: true,
       secure: true,

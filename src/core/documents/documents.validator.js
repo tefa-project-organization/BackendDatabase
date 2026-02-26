@@ -9,6 +9,11 @@ create: Joi.object({
     .required(),
 
   date_signed: Joi.date().optional(),
+
+  document_url: Joi.string()
+    .uri()
+    .required(),
+    
 })
 .options({ abortEarly: false, allowUnknown: false }),
 

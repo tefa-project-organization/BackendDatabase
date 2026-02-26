@@ -100,34 +100,38 @@ async generateDocumentNumber() {
     const path = publicUrl.split(`${bucket}/`)[1];
     if (!path) return;
 
-  await supabase.storage.from(bucket).remove([path]);
-}
-
-findAll = async (query) => {
-  const q = this.transformBrowseQuery(query);
-
-  q.where = {
-    ...q.where,
-    is_deleted: false,
-  };
-
-  const data = await this.db.documents.findMany(q);
-
-  if (query.paginate) {
-    const countData = await this.db.documents.count({ where: q.where });
-    return this.paginate(data, countData, q);
+    await supabase.storage.from(bucket).remove([path]);
   }
 
-  return data;
-};
 
+  findAll = async (query) => {
+    const q = this.transformBrowseQuery(query);
+    q.where = {
+    ...q.where,
+    is_deleted: false
+  };
+    const data = await this.db.documents.findMany({ ...q });
+
+    if (query.paginate) {
+      const countData = await this.db.documents.count({ where: q.where });
+      return this.paginate(data, countData, q);
+    }
+    return data;
+  };
 
   findById = async (id) => {
     const data = await this.db.documents.findUnique({ where: { id: Number(id) } });
     return data;
   };
 
-create = async (payload, documentFile) => {
+create = async (payload) => {
+  const project = await this.db.projects.findUnique({
+    where: { id: Number(payload.project_id) },
+    include: { client_pics: true },
+  });
+
+  if (!project) throw new Error("Project tidak ditemukan");
+
   const number = await this.generateDocumentNumber();
 
   const project = await this.db.projects.findUnique({
@@ -143,27 +147,23 @@ if (!project.client_pics) {
   throw new Error("Project does not have client PIC assigned");
 }
 
-const document = await this.db.documents.create({
-  data: {
-    number,
-    project_id: project.id,
-    client_id: project.client_id,
-    client_pic_id: project.client_pics.id,
-    date_signed: payload.date_signed,
-    document_types: payload.document_types,
-  },
-});
+  const document = await this.db.documents.create({
+    data: {
+      number,
+      document_types: payload.document_types,
+      date_signed: payload.date_signed
+        ? new Date(payload.date_signed)
+        : null,
+      document_url: payload.document_url,
 
-  if (documentFile) {
-    const url = await this.uploadDocument(documentFile, document.id);
+      projects: { connect: { id: project.id } },
+      clients: { connect: { id: project.client_id } },
 
-    await this.db.documents.update({
-      where: { id: document.id },
-      data: { document_url: url },
-    });
-
-    document.document_url = url;
-  }
+      ...(project.client_pics && {
+        client_pics: { connect: { id: project.client_pics.id } },
+      }),
+    },
+  });
 
   return document;
 };
@@ -219,30 +219,10 @@ updateWithFile = async (id, payload, documentFile) => {
   });
 };
 
-delete = async (id) => {
-  const document = await this.db.documents.findUnique({
-    where: { id: Number(id) },
-  });
-
-  if (!document) throw new Error("Document not found");
-
-  // hapus file di Supabase
-  try {
-    await this.deleteDocumentFile(document.document_url);
-  } catch (err) {
-    console.warn("Supabase delete failed:", err.message);
-  }
-
-  // soft delete
-  return await this.db.documents.update({
-    where: { id: Number(id) },
-    data: {
-      is_deleted: true,
-      document_url: null,
-    },
-  });
-};
-
+  delete = async (id) => {
+    const data = await this.db.documents.update({  where: { id:  Number(id), }, data: { is_deleted: true }});
+    return data;
+  };
 }
 
 export default documentsService;  

@@ -1,5 +1,6 @@
 import BaseService from "../../base/service.base.js";
 import prisma from "../../config/prisma.db.js";
+import clientsService from "../clients/clients.service.js";
 
 
 class ProjectsService extends BaseService {
@@ -72,6 +73,12 @@ class ProjectsService extends BaseService {
     is_deleted: false
   };
 
+  // Tambahkan include relasi
+  q.include = {
+    clients: true,
+    client_pics: true, // pastikan memang ada di schema
+  };
+
   const data = await this.db.projects.findMany(q);
 
   if (query.paginate) {
@@ -84,13 +91,26 @@ class ProjectsService extends BaseService {
 
 findAllDeleted = async (query) => {
     const q = this.transformBrowseQuery(query);
-    const data = await this.db.history.findMany({ ...q });
 
-    if (query.paginate) { 
-      const countData = await this.db.history.count({ where: q.where });
-      return this.paginate(data, countData, q);
-    }
-    return data;
+  q.where = {
+    ...q.where,
+    is_deleted: true
+  };
+
+  //  Tambahkan include relasi
+  q.include = {
+    clients: true,
+    client_pics: true, // pastikan memang ada di schema
+  };
+
+  const data = await this.db.projects.findMany(q);
+
+  if (query.paginate) {
+    const countData = await this.db.projects.count({ where: q.where });
+    return this.paginate(data, countData, q);
+  }
+
+  return data;
   };
 
 
