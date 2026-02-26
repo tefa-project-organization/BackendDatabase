@@ -36,7 +36,7 @@ create: Joi.object({
 
 document_types: Joi.string()
     .valid("BA", "OP", "BAST")
-    .required(),
+    .optional(),
 
   date_created: Joi.date()
     .optional(),

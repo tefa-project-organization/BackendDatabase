@@ -176,9 +176,7 @@ updateWithFile = async (id, payload, documentFile) => {
         project_id: payload.project_id,
         client_id: payload.client_id,
         client_pic_id: payload.client_pic_id,
-        document_types: payload.document_types_id
-          ? { connect: { id: payload.document_types_id } }
-          : undefined,
+        document_types: payload.document_types,
       },
     });
 
