@@ -117,6 +117,11 @@ resetPassword = async (token, newPassword) => {
   const isEmail = identifier.includes("@");
   const employees = await this.db.employees.findUnique({
     where: isEmail ? { email: identifier } : { nik: identifier },
+    include: {
+      position: true,
+      department: true,
+      status: true,
+    },
   });
 
   if (!employees) throw new NotFound("Account not found");

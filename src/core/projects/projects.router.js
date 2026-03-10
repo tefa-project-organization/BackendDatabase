@@ -4,6 +4,7 @@ import projectsController from "./projects.controller.js";
 import projectsValidator from "./projects.validator.js";
 import { baseValidator } from "../../base/validator.base.js";
 import auth from "../../middlewares/auth.middleware.js";
+import allowPosition from "../../middlewares/posititon.middleware.js";
 
 const r = Router(),
   validator = projectsValidator,
@@ -26,6 +27,7 @@ r.get("/show-one/:id", controller.findById);
 r.post(
   "/create",
   auth(),
+  allowPosition(["Manager", "Admin", "Chief Exceutive", "PM"]),
   validatorMiddleware({ body: validator.create }),
   controller.create
   );
