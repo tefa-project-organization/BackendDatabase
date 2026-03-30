@@ -17,6 +17,7 @@ export const generateAccessToken = async (user) => {
   const payload = {
     employeesId: user.id,
     email: user.email,
+    position: user.position?.position_name
   };
 
   return jwt.sign(payload, privateKey, {
@@ -39,7 +40,8 @@ export const getTokenExpires = async (token) => {
 export const generateRefreshToken = async (user) => {
   const payload = {
     employeesId: user.id,
-    email: user.email
+    email: user.email,
+    position: user.position?.position_name
   };
 
   return jwt.sign(payload, privateKey, {

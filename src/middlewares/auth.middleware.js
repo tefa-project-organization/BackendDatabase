@@ -42,7 +42,10 @@ export default function auth(roles) {
 
       // 3. FETCH EMPLOYEE DARI DB
       const employees = await prisma.employees.findUnique({
-        where: { id: employeesId }
+        where: { id: employeesId },
+        include: {
+          position: true,
+        },
       });
 
       if (!employees) {
